@@ -207,26 +207,29 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
         st.success("Role scores calculated!")
 
-        # Show top roles per player
-with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
-    # Search box for player
-    search_query = st.text_input("Search for a player:", "")
+  st.success("Role scores calculated!")
 
-    # Filter player list by search query
-    player_list = results_df["Player"].unique().tolist()
-    filtered_players = [p for p in player_list if search_query.lower() in p.lower()]
+    # Show top roles per player
+    with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
+        # Search box for player
+        search_query = st.text_input("Search for a player:", "")
 
-    # Select from filtered list
-    if filtered_players:
-        selected_player = st.selectbox("Select a player to view their roles:", filtered_players)
-        player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
-        st.dataframe(player_roles, use_container_width=True)
-    else:
-        st.warning("No players match your search.")
+        # Filter player list by search query
+        player_list = results_df["Player"].unique().tolist()
+        filtered_players = [p for p in player_list if search_query.lower() in p.lower()]
 
-        # Optional: full table
-        with st.expander("📋 View All Role Scores Table"):
-            st.dataframe(results_df, use_container_width=True)
+        # Select from filtered list
+        if filtered_players:
+            selected_player = st.selectbox("Select a player to view their roles:", filtered_players)
+            player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
+            st.dataframe(player_roles, use_container_width=True)
+        else:
+            st.warning("No players match your search.")
 
+    # Optional: full table
+    with st.expander("📋 View All Role Scores Table"):
+        st.dataframe(results_df, use_container_width=True)
+
+# outside the "if uploaded_file:" block
 else:
     st.info("Please upload a file to begin.")
