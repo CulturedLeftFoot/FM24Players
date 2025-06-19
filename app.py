@@ -224,7 +224,6 @@ with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
     else:
         st.warning("No players match your search.")
 
-
         # Optional: full table
         with st.expander("📋 View All Role Scores Table"):
             st.dataframe(results_df, use_container_width=True)
