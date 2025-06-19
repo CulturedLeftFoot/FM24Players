@@ -19,7 +19,6 @@ if uploaded_file:
 
         # Load formulas from local text or embedded string
         formula_text = """
-
 AF At = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Cmp]+Attributes[Acc])/7)*0.8)+(((Attributes[Pas]+Attributes[Ant]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
 DLF At = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Tea])/7)*0.8)+(((Attributes[Fin]+Attributes[Ant]+Attributes[Fla]+Attributes[Vis]+Attributes[Bal]+Attributes[Str]+Attributes[Dri])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
@@ -169,7 +168,6 @@ NCB De = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Ant])/3)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 """
 
-
         pattern = re.compile(r"(?P<role>[A-Za-z0-9\s]+)=\s*(?P<formula>\(+.*)")
         formulas = {}
         for line in formula_text.splitlines():
@@ -207,29 +205,16 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
         st.success("Role scores calculated!")
 
-  st.success("Role scores calculated!")
-
-    # Show top roles per player
-    with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
-        # Search box for player
-        search_query = st.text_input("Search for a player:", "")
-
-        # Filter player list by search query
-        player_list = results_df["Player"].unique().tolist()
-        filtered_players = [p for p in player_list if search_query.lower() in p.lower()]
-
-        # Select from filtered list
-        if filtered_players:
-            selected_player = st.selectbox("Select a player to view their roles:", filtered_players)
+        # Show top roles per player
+        with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
+            player_list = results_df["Player"].unique().tolist()
+            selected_player = st.selectbox("Select a player to view their roles:", player_list)
             player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
             st.dataframe(player_roles, use_container_width=True)
-        else:
-            st.warning("No players match your search.")
 
-    # Optional: full table
-    with st.expander("📋 View All Role Scores Table"):
-        st.dataframe(results_df, use_container_width=True)
+        # Optional: full table
+        with st.expander("📋 View All Role Scores Table"):
+            st.dataframe(results_df, use_container_width=True)
 
-# outside the "if uploaded_file:" block
 else:
     st.info("Please upload a file to begin.")
