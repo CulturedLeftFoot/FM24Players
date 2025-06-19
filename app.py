@@ -209,10 +209,21 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
         # Show top roles per player
         with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
-            player_list = results_df["Player"].unique().tolist()
-            selected_player = st.selectbox("Select a player to view their roles:", player_list)
-            player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
-            st.dataframe(player_roles, use_container_width=True)
+           # Search box for player
+search_query = st.text_input("Search for a player:", "")
+
+# Filter player list by search query
+player_list = results_df["Player"].unique().tolist()
+filtered_players = [p for p in player_list if search_query.lower() in p.lower()]
+
+# Select from filtered list
+if filtered_players:
+    selected_player = st.selectbox("Select a player to view their roles:", filtered_players)
+    player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
+    st.dataframe(player_roles, use_container_width=True)
+else:
+    st.warning("No players match your search.")
+
 
         # Optional: full table
         with st.expander("📋 View All Role Scores Table"):
