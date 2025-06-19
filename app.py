@@ -6,7 +6,7 @@ st.set_page_config(page_title="Player Role Matcher", layout="wide")
 st.title("⚽ Player Role Matching Dashboard")
 
 # Upload HTML file
-uploaded_file = st.file_uploader("Upload your HTML file that has used the Cultured Left Foot "Outfield Attributes (ALL) View", type=["html"])
+uploaded_file = st.file_uploader("Upload your HTML file that has used the Cultured Left Foot Outfield Attributes (ALL) View", type=["html"])
 
 if uploaded_file:
     try:
