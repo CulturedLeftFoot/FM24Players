@@ -212,9 +212,9 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     		search_query = st.text_input("Search for a player by name")
     		filtered_players = [p for p in player_list if search_query.lower() in p.lower()] if search_query else player_list
     
-    		if not filtered_players:
+    	if not filtered_players:
         	st.warning("No players found with that name.")
-    		else:
+    	else:
         	selected_player = st.selectbox("Select a player to view their roles:", filtered_players)
         	player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
         	st.dataframe(player_roles, use_container_width=True)
