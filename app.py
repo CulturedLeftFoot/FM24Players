@@ -5,20 +5,21 @@ import re
 st.set_page_config(page_title="Player Role Matcher", layout="wide")
 st.title("⚽ Player Role Matching Dashboard")
 
-uploaded_file = st.file_uploader("Upload your SquadAnalysis Excel file", type=["xlsx"])
+# Upload HTML file
+uploaded_file = st.file_uploader("Upload your SquadAnalysis HTML file", type=["html"])
 
 if uploaded_file:
-    # Load Excel and parse sheets
-    sheets = pd.read_excel(uploaded_file, sheet_name=None)
-    attributes_df = sheets.get("Attributes")
-
-    if attributes_df is None:
-        st.error("'Attributes' sheet not found in Excel file.")
-    else:
+    try:
+        tables = pd.read_html(uploaded_file)
+        attributes_df = tables[0]  # Use the first table found
         attributes_df.columns = attributes_df.columns.str.strip()
+    except Exception as e:
+        st.error(f"Failed to read HTML table: {e}")
+        st.stop()
 
-        # Load formulas from local text or embedded string
-        formula_text = """
+    # Load formulas
+    formula_text = """
+    
 AF At = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Cmp]+Attributes[Acc])/7)*0.8)+(((Attributes[Pas]+Attributes[Ant]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
 DLF At = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Tea])/7)*0.8)+(((Attributes[Fin]+Attributes[Ant]+Attributes[Fla]+Attributes[Vis]+Attributes[Bal]+Attributes[Str]+Attributes[Dri])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
@@ -168,53 +169,51 @@ NCB De = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Ant])/3)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 """
 
-        pattern = re.compile(r"(?P<role>[A-Za-z0-9\s]+)=\s*(?P<formula>\(+.*)")
-        formulas = {}
-        for line in formula_text.splitlines():
-            match = pattern.match(line.strip())
-            if match:
-                role = match.group("role").strip()
-                formula = match.group("formula").strip()
-                formulas[role] = formula
+    pattern = re.compile(r"(?P<role>[A-Za-z0-9\s]+)=\s*(?P<formula>\(+.*)")
+    formulas = {}
+    for line in formula_text.splitlines():
+        match = pattern.match(line.strip())
+        if match:
+            role = match.group("role").strip()
+            formula = match.group("formula").strip()
+            formulas[role] = formula
 
-        # Score function
-        def evaluate_formula(formula: str, player: dict) -> float:
-            eval_formula = formula
-            for attr in re.findall(r"Attributes\[(\w+)\]", formula):
-                value = player.get(attr, 0)
-                eval_formula = eval_formula.replace(f"Attributes[{attr}]", str(value))
-            try:
-                return round(eval(eval_formula), 2)
-            except:
-                return None
+    # Evaluate formula for each player
+    def evaluate_formula(formula: str, player: dict) -> float:
+        eval_formula = formula
+        for attr in re.findall(r"Attributes\[(\w+)\]", formula):
+            value = player.get(attr, 0)
+            eval_formula = eval_formula.replace(f"Attributes[{attr}]", str(value))
+        try:
+            return round(eval(eval_formula), 2)
+        except:
+            return None
 
-        # Apply formulas
-        players_data = {
-            row["Name"]: row.to_dict()
-            for _, row in attributes_df.iterrows()
-        }
+    players_data = {
+        row["Name"]: row.to_dict()
+        for _, row in attributes_df.iterrows()
+    }
 
-        results = []
-        for player_name, player_data in players_data.items():
-            for role, formula in formulas.items():
-                score = evaluate_formula(formula, player_data)
-                if score is not None:
-                    results.append({"Player": player_name, "Role": role, "Score": score})
+    results = []
+    for player_name, player_data in players_data.items():
+        for role, formula in formulas.items():
+            score = evaluate_formula(formula, player_data)
+            if score is not None:
+                results.append({"Player": player_name, "Role": role, "Score": score})
 
-        results_df = pd.DataFrame(results)
+    results_df = pd.DataFrame(results)
 
-        st.success("Role scores calculated!")
+    st.success("Role scores calculated!")
 
-        # Show top roles per player
-        with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
-            player_list = results_df["Player"].unique().tolist()
-            selected_player = st.selectbox("Select a player to view their roles:", player_list)
-            player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
-            st.dataframe(player_roles, use_container_width=True)
+    # Top roles per player
+    with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
+        player_list = results_df["Player"].unique().tolist()
+        selected_player = st.selectbox("Select a player to view their roles:", player_list)
+        player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
+        st.dataframe(player_roles, use_container_width=True)
 
-        # Optional: full table
-        with st.expander("📋 View All Role Scores Table"):
-            st.dataframe(results_df, use_container_width=True)
-
+    # All scores table
+    with st.expander("📋 View All Role Scores Table"):
+        st.dataframe(results_df, use_container_width=True)
 else:
     st.info("Please upload a file to begin.")
