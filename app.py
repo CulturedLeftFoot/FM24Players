@@ -205,6 +205,13 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
     st.success("Role scores calculated!")
 
+    # Get top player per role
+    top_players = results_df.loc[results_df.groupby("Role")["Score"].idxmax()].reset_index(drop=True)
+
+    with st.expander("🏆 View Top Player Per Role", expanded=False):
+    st.dataframe(top_players.sort_values(by="Role"), use_container_width=True)
+
+
     # Top roles per player
     with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
         player_list = results_df["Player"].unique().tolist()
