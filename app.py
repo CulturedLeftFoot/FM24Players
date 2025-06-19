@@ -19,6 +19,7 @@ if uploaded_file:
 
     # Load formulas
     formula_text = """
+    # (Paste your entire long formula string here, unchanged)
     
 AF At = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Cmp]+Attributes[Acc])/7)*0.8)+(((Attributes[Pas]+Attributes[Ant]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
@@ -167,7 +168,8 @@ NCB Co = (((Attributes[Hea]+Attributes[Tck]+Attributes[Ant]+Attributes[Bra]+Attr
 NCB De = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Ant]+Attributes[Pac])/4)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
 NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Ant])/3)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-"""
+
+    """
 
     pattern = re.compile(r"(?P<role>[A-Za-z0-9\s]+)=\s*(?P<formula>\(+.*)")
     formulas = {}
@@ -209,10 +211,9 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     top_players = results_df.loc[results_df.groupby("Role")["Score"].idxmax()].reset_index(drop=True)
 
     with st.expander("🏆 View Top Player Per Role", expanded=False):
-    st.dataframe(top_players.sort_values(by="Role"), use_container_width=True)
+        st.dataframe(top_players.sort_values(by="Role"), use_container_width=True)
 
-
-    # Top roles per player
+    # Show top roles per player
     with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
         player_list = results_df["Player"].unique().tolist()
         selected_player = st.selectbox("Select a player to view their roles:", player_list)
@@ -224,3 +225,4 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
         st.dataframe(results_df, use_container_width=True)
 else:
     st.info("Please upload a file to begin.")
+
