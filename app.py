@@ -242,7 +242,36 @@ with st.expander("📋 View All Role Scores Table"):
     filtered_df = pivot_df[mask]
 
     role_groups = {
-        # (same dictionary as in your original code)
+        # Defensive
+        "BPD Co": "Defensive", "BPD De": "Defensive", "BPD St": "Defensive",
+        "CB Co": "Defensive", "CB D": "Defensive", "CB St": "Defensive", 
+        "NCB St": "Defensive", "NCB Co": "Defensive", "NCB De": "Defensive",
+        "WCB At": "Defensive", "WCB De": "Defensive", "WCB Su": "Defensive",
+        "Lib Su": "Defensive", "Lib De": "Defensive",
+        "FB De": "Defensive", "FB Su": "Defensive", "FB At": "Defensive",
+        "IFB De": "Defensive", "IWB De": "Defensive", "IWB Su": "Defensive", "IWB At": "Defensive",
+        "WB De": "Defensive", "WB Su": "Defensive", "WB At": "Defensive",
+
+        # Midfield
+        "BWM De": "Midfield", "BWM Su": "Midfield", "DM D": "Midfield", "DM S": "Midfield",
+        "DLP De": "Midfield", "DLP Su": "Midfield", "Half Back": "Midfield", "Anc": "Midfield",
+        "SV Su": "Midfield", "RPM Su": "Midfield", "Reg": "Midfield",
+        "CM De": "Midfield", "CM Su": "Midfield", "CM At": "Midfield",
+        "B2B Su": "Midfield", "AP Su": "Midfield", "AP At": "Midfield",
+        "Def Wing De": "Midfield", "Def Wing Su": "Midfield",
+        "Wide Mid De": "Midfield", "Wide Mid Su": "Midfield", "Wide Mid At": "Midfield",
+        "Mez Su": "Midfield", "Mez At": "Midfield",
+        "Winger Su": "Midfield", "Winger At": "Midfield",
+        "AMC Su": "Midfield", "AMC At": "Midfield",
+        "Inv Wing Su": "Midfield", "Inv Wing At": "Midfield",
+
+        # Attacking
+        "IF A": "Attacking", "IF S": "Attacking", "Eng Su": "Attacking",
+        "Tq At": "Attacking", "TF Su": "Attacking", "TF At": "Attacking",
+        "SS At": "Attacking", "Pre Fwd De": "Attacking", "Pre Fwd Su": "Attacking", "Pre Fwd At": "Attacking",
+        "Poach At": "Attacking", "F9 Su": "Attacking",
+        "CF Su": "Attacking", "CF At": "Attacking",
+        "AF At": "Attacking"
     }
 
     group_order = ["Defensive", "Midfield", "Attacking"]
