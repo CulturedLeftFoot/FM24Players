@@ -227,7 +227,8 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     role_groups = {
     # Defensive
     "BPD Co": "Defensive", "BPD De": "Defensive", "BPD St": "Defensive",
-    "CB Co": "Defensive", "CB D": "Defensive", "CB St": "Defensive",
+    "CB Co": "Defensive", "CB D": "Defensive", "CB St": "Defensive", 
+    "NCB St": "Defensive", "NCB Co": "Defensive", "NCB De": "Defensive"
     "WCB At": "Defensive", "WCB De": "Defensive", "WCB Su": "Defensive",
     "Lib Su": "Defensive", "Lib De": "Defensive",
     "FB De": "Defensive", "FB Su": "Defensive", "FB At": "Defensive",
