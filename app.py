@@ -45,9 +45,9 @@ Pre Fwd De = ((((Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Dec]
 
 F9 Su = (((((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Vis]+Attributes[Acc]+Attributes[Agi])/10)*0.8)+(((Attributes[Fin]+Attributes[Ant]+Attributes[Fla]+Attributes[Tea]+Attributes[Bal])/5)*0.2)))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
-IF A = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Acc]+Attributes[Agi])/7)*0.8)+(((Attributes[Lon]+Attributes[Pas]+Attributes[Ant]+Attributes[Cmp]+Attributes[Fla]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/9)*0.2))
+IF A = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Acc]+Attributes[Agi])/7)*0.8)+(((Attributes[Lon]+Attributes[Pas]+Attributes[Ant]+Attributes[Cmp]+Attributes[Fla]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/9)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
-IF S = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Acc]+Attributes[Agi])/7)*0.8)+(((Attributes[Lon]+Attributes[Pas]+Attributes[Ant]+Attributes[Cmp]+Attributes[Fla]+Attributes[Vis]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/10)*0.2))
+IF S = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Acc]+Attributes[Agi])/7)*0.8)+(((Attributes[Lon]+Attributes[Pas]+Attributes[Ant]+Attributes[Cmp]+Attributes[Fla]+Attributes[Vis]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
 Wide Mid At = ((((Attributes[Pas]+Attributes[Tck]+Attributes[Tea]+Attributes[Wor]+Attributes[Dec])/5)*0.8)+(((Attributes[Cro]+Attributes[Fir]+Attributes[OtB]+Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[Sta]+Attributes[Vis])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
@@ -159,9 +159,9 @@ WCB De = (((Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attr
 
 CB Co = (((Attributes[Tck]+Attributes[Dec]+Attributes[Pos]+Attributes[Dec]+Attributes[Cnt]+Attributes[Ant]+Attributes[Pac])/7)*0.8)+(((Attributes[Cmp]+Attributes[Hea]+Attributes[Bra]+Attributes[Str]+Attributes[Jum])/5)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
-CB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Dec]+Attributes[Pos]+Attributes[Str]+Attributes[Jum]+Attributes[Bra]+Attributes[Agg])/8)*0.8)+(((Attributes[Cnt]+Attributes[Ant]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Mar])/5)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
+CB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Dec]+Attributes[Pos]+Attributes[Str]+Attributes[Jum]+Attributes[Bra]+Attributes[Agg])/8)*0.8)+(((Attributes[Cnt]+Attributes[Ant]+Attributes[Cmp]+Attributes[Mar])/4)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
-CB D = (((Attributes[Hea]+Attributes[Tck]+Attributes[Mar]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/6)*0.8)+(((Attributes[Cnt]+Attributes[Pac]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec])/8)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
+CB D = (((Attributes[Hea]+Attributes[Tck]+Attributes[Mar]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/6)*0.8)+(((Attributes[Cnt]+Attributes[Pac]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Dec])/7)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
 NCB Co = (((Attributes[Hea]+Attributes[Tck]+Attributes[Ant]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Pac])/3)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
