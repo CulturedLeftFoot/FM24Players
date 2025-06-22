@@ -269,6 +269,6 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
         pivot_df.style
         .apply(highlight_max, axis=1)
         .format("{:.2f}")
-    st.dataframe(styled_pivot_df, use_container_width=True))
+   
 else:
     st.info("Please upload a file to begin.")
