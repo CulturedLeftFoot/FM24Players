@@ -228,7 +228,7 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
         if pivot_df.empty:
             st.warning("No role scores available to display.")
-            else:
+        else:
         # Value range filter
             min_score = float(pivot_df.min().min())
             max_score = float(pivot_df.max().max())
