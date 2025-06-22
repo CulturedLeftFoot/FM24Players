@@ -229,8 +229,8 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
         is_max = s == s.max()
         return ['background-color: #006400' if v else '' for v in is_max]
 
-    styled_pivot_df = pivot_df.style.apply(highlight_max, axis=1)
-    .format("{:.2f}")  # <- This ensures two decimal places
+    styled_pivot_df =( pivot_df.style.apply(highlight_max, axis=1)
+    .format("{:.2f}") ) # <- This ensures two decimal places
     st.dataframe(styled_pivot_df, use_container_width=True)
 
 else:
