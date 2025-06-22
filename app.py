@@ -63,7 +63,7 @@ Inv Wing At = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Pas]+Attributes[Tec
 
 Inv Wing Su = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Pas]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/6)*0.8)+(((Attributes[Fir]+Attributes[Lon]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta]+Attributes[Vis]+Attributes[Cmp]+Attributes[Dec])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
-Winger Su = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/5)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/6)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
+Winger Su = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/5)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
 Winger At = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/5)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta]+Attributes[Fla]+Attributes[Ant])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
 
@@ -129,13 +129,13 @@ IWB De = (((Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Tea]+Attr
 
 IFB De = (((Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Str])/5)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Jum]+Attributes[Pac])/14)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
-WB At = (((Attributes[Cro]+Attributes[Dri]+Attributes[Mar]+Attributes[Tck]+Attributes[OtB]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta]+Attributes[Acc])/9)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[OtB]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Ant]+Attributes[Fla])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
+WB At = (((Attributes[Cro]+Attributes[Dri]+Attributes[Mar]+Attributes[Tck]+Attributes[OtB]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta]+Attributes[Acc])/9)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Ant]+Attributes[Fla])/10)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
-WB Su = (((Attributes[Cro]+Attributes[Dri]+Attributes[Mar]+Attributes[Tck]+Attributes[OtB]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta]+Attributes[Acc])/9)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[OtB]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Ant])/10)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
+WB Su = (((Attributes[Cro]+Attributes[Dri]+Attributes[Mar]+Attributes[Tck]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta]+Attributes[Acc]+Attributes[OtB])/9)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Ant])/9)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
 WB De = (((Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Tea]+Attributes[Wor]+Attributes[Ant]+Attributes[Sta]+Attributes[Acc])/8)*0.8)+(((Attributes[Cro]+Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[OtB]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
-FB At = (((Attributes[Mar]+Attributes[Tck]+Attributes[Cro]+Attributes[Pos]+Attributes[Ant]+Attributes[Pos]+Attributes[Tea])/7)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Wor]+Attributes[Dec]+Attributes[Cnt]+Attributes[OtB]+Attributes[Agi]+Attributes[Sta]+Attributes[Pac])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
+FB At = (((Attributes[Mar]+Attributes[Tck]+Attributes[Cro]+Attributes[Pos]+Attributes[Ant]+Attributes[Tea])/6)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Wor]+Attributes[Dec]+Attributes[Cnt]+Attributes[OtB]+Attributes[Agi]+Attributes[Sta]+Attributes[Pac])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
 FB Su = (((Attributes[Mar]+Attributes[Tck]+Attributes[Tea]+Attributes[Pos]+Attributes[Cnt]+Attributes[Ant])/6)*0.8)+(((Attributes[Cro]+Attributes[Dri]+Attributes[Pas]+Attributes[Tec]+Attributes[Wor]+Attributes[Dec]+Attributes[Sta]+Attributes[Pac])/8)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
@@ -157,7 +157,7 @@ WCB Su = (((Attributes[Dri]+Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attr
 
 WCB De = (((Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/6)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Pac])/13)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
-CB Co = (((Attributes[Tck]+Attributes[Dec]+Attributes[Pos]+Attributes[Dec]+Attributes[Cnt]+Attributes[Ant]+Attributes[Pac])/7)*0.8)+(((Attributes[Cmp]+Attributes[Hea]+Attributes[Bra]+Attributes[Str]+Attributes[Jum])/5)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
+CB Co = (((Attributes[Tck]+Attributes[Pos]+Attributes[Dec]+Attributes[Cnt]+Attributes[Ant]+Attributes[Pac])/6)*0.8)+(((Attributes[Cmp]+Attributes[Hea]+Attributes[Bra]+Attributes[Str]+Attributes[Jum])/5)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
 CB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Dec]+Attributes[Pos]+Attributes[Str]+Attributes[Jum]+Attributes[Bra]+Attributes[Agg])/8)*0.8)+(((Attributes[Cnt]+Attributes[Ant]+Attributes[Cmp]+Attributes[Mar])/4)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
 
