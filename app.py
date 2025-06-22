@@ -6,7 +6,7 @@ st.set_page_config(page_title="Player Role Matcher", layout="wide")
 st.title("⚽ Player Role Matching Dashboard")
 
 # Upload HTML file
-uploaded_file = st.file_uploader("Upload your Outfield Attributes HTML file that has been created using the Cultured Left Foot Outfield Attributes (ALL) View in FM24", type=["html"])
+uploaded_file = st.file_uploader("Upload your SquadAnalysis HTML file", type=["html"])
 
 if uploaded_file:
     try:
@@ -222,7 +222,15 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
     # All scores table
     with st.expander("📋 View All Role Scores Table"):
-        st.dataframe(results_df, use_container_width=True)
+    pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
+
+    # Highlight the highest score in each row (per player)
+    def highlight_max(s):
+        is_max = s == s.max()
+        return ['background-color: lightgreen' if v else '' for v in is_max]
+
+    styled_pivot_df = pivot_df.style.apply(highlight_max, axis=1)
+    st.dataframe(styled_pivot_df, use_container_width=True)
+
 else:
     st.info("Please upload a file to begin.")
-
