@@ -224,18 +224,31 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     
     # All scores table
     with st.expander("📋 View All Role Scores Table"):
-        pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
+    pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
 
+        if pivot_df.empty:
+        st.warning("No role scores available to display.")
+        else:
         # Value range filter
         min_score = float(pivot_df.min().min())
         max_score = float(pivot_df.max().max())
-        score_range = st.slider(
-            "Select score range to filter players",
-            min_value=round(min_score, 2),
-            max_value=round(max_score, 2),
-            value=(round(min_score, 2), round(max_score, 2)),
-            step=0.01
-         )
+
+        # Defensive check to avoid slider errors
+            if min_score == max_score:
+                st.info(f"All scores are the same: {min_score:.2f}")
+            score_range = (min_score, max_score)
+            else:
+                score_range = st.slider(
+                "Select score range to filter players",
+                min_value=round(min_score, 2),
+                max_value=round(max_score, 2),
+                value=(round(min_score, 2), round(max_score, 2)),
+                step=0.01
+            )
+
+        # Apply filter
+        mask = pivot_df.apply(lambda row: row.between(score_range[0], score_range[1]).any(), axis=1)
+        filtered_df = pivot_df[mask]
 
     # Apply filter: keep rows where any score is within the selected range
     mask = pivot_df.apply(lambda row: row.between(score_range[0], score_range[1]).any(), axis=1)
