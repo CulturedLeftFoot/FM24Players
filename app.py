@@ -227,7 +227,7 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     # Highlight the highest score in each row (per player)
     def highlight_max(s):
         is_max = s == s.max()
-        return ['background-color: lightgreen' if v else '' for v in is_max]
+        return ['background-color: #006400' if v else '' for v in is_max]
 
     styled_pivot_df = pivot_df.style.apply(highlight_max, axis=1)
     st.dataframe(styled_pivot_df, use_container_width=True)
