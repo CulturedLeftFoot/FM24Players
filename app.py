@@ -222,7 +222,7 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
     # All scores table
     with st.expander("📋 View All Role Scores Table"):
-    pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
+        pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
 
     # Highlight the highest score in each row (per player)
     def highlight_max(s):
