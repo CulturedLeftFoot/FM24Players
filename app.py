@@ -227,17 +227,17 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
         pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
 
         if pivot_df.empty:
-        st.warning("No role scores available to display.")
-        else:
+            st.warning("No role scores available to display.")
+            else:
         # Value range filter
-        min_score = float(pivot_df.min().min())
-        max_score = float(pivot_df.max().max())
+            min_score = float(pivot_df.min().min())
+            max_score = float(pivot_df.max().max())
 
         # Defensive check to avoid slider errors
-            if min_score == max_score:
+                if min_score == max_score:
                 st.info(f"All scores are the same: {min_score:.2f}")
             score_range = (min_score, max_score)
-            else:
+                else:
                 score_range = st.slider(
                 "Select score range to filter players",
                 min_value=round(min_score, 2),
