@@ -224,7 +224,7 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     
     # All scores table
     with st.expander("📋 View All Role Scores Table"):
-    pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
+        pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
 
         if pivot_df.empty:
         st.warning("No role scores available to display.")
