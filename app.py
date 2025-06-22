@@ -222,20 +222,20 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
    
     
-# All scores table
-with st.expander("📋 View All Role Scores Table"):
-    pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
+    # All scores table
+    with st.expander("📋 View All Role Scores Table"):
+        pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
 
-    # Value range filter
-    min_score = float(pivot_df.min().min())
-    max_score = float(pivot_df.max().max())
-    score_range = st.slider(
-        "Select score range to filter players",
-        min_value=round(min_score, 2),
-        max_value=round(max_score, 2),
-        value=(round(min_score, 2), round(max_score, 2)),
-        step=0.01
-    )
+        # Value range filter
+        min_score = float(pivot_df.min().min())
+        max_score = float(pivot_df.max().max())
+        score_range = st.slider(
+            "Select score range to filter players",
+            min_value=round(min_score, 2),
+            max_value=round(max_score, 2),
+            value=(round(min_score, 2), round(max_score, 2)),
+            step=0.01
+         )
 
     # Apply filter: keep rows where any score is within the selected range
     mask = pivot_df.apply(lambda row: row.between(score_range[0], score_range[1]).any(), axis=1)
