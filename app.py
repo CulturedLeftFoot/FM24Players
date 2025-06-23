@@ -306,26 +306,26 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
     st.dataframe(styled_filtered_df, use_container_width=True)
 
-    with st.expander("🎯 Filter Players Ranked Top N in Every Role", expanded=False):
-        rank_threshold = st.selectbox("Only show players ranked in top N across all roles:", [5, 10, 12], index=1)
-        display_option = st.radio("View:", ["Scores", "Ranks"], horizontal=True)
+    with st.expander("🎯 Show Players Outside Top N in Every Role", expanded=False):
+    rank_threshold = st.selectbox("Only show players ranked *outside* top N across all roles:", [5, 10, 12], index=1)
+    display_option = st.radio("View:", ["Scores", "Ranks"], horizontal=True)
 
-        # Create pivot tables
-        score_pivot = results_df.pivot(index="Player", columns="Role", values="Score")
-        rank_pivot = results_df.pivot(index="Player", columns="Role", values="Rank")
+    # Create pivot tables
+    score_pivot = results_df.pivot(index="Player", columns="Role", values="Score")
+    rank_pivot = results_df.pivot(index="Player", columns="Role", values="Rank")
 
-        # Apply filter: player must be within top N in all roles they have a score for
-        mask_outside_top_n = rank_pivot.apply(lambda row: row.dropna().min() > rank_threshold, axis=1)
-        top_n_players = rank_pivot[mask_top_n]
+    # Filter: player must be ranked *worse than* N in all roles
+    mask_outside_top_n = rank_pivot.apply(lambda row: row.dropna().min() > rank_threshold, axis=1)
+    outside_top_n_players = rank_pivot[mask_outside_top_n]
 
-        if top_n_players.empty:
-            st.warning(f"No players are ranked in the top {rank_threshold} across all roles.")
+    if outside_top_n_players.empty:
+        st.warning(f"All players have at least one role ranked within top {rank_threshold}.")
+    else:
+        if display_option == "Scores":
+            df_to_display = score_pivot.loc[outside_top_n_players.index]
+            st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
         else:
-            if display_option == "Scores":
-                df_to_display = score_pivot.loc[top_n_players.index]
-                st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
-            else:
-                df_to_display = rank_pivot.loc[top_n_players.index]
-                st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
+            df_to_display = rank_pivot.loc[outside_top_n_players.index]
+            st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
 else:
     st.info("Please upload a file to begin.")
