@@ -322,10 +322,10 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
             st.warning(f"No players are ranked in the top {rank_threshold} across all roles.")
         else:
             if display_option == "Scores":
-            df_to_display = score_pivot.loc[top_n_players.index]
-            st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
-             else:
-            df_to_display = rank_pivot.loc[top_n_players.index]
-            st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
+                df_to_display = score_pivot.loc[top_n_players.index]
+                st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
+            else:
+                df_to_display = rank_pivot.loc[top_n_players.index]
+                st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
 else:
     st.info("Please upload a file to begin.")
