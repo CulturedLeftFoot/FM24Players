@@ -318,13 +318,13 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     mask_top_n = rank_pivot.apply(lambda row: row.dropna().max() <= rank_threshold, axis=1)
     top_n_players = rank_pivot[mask_top_n]
 
-    if top_n_players.empty:
+        if top_n_players.empty:
         st.warning(f"No players are ranked in the top {rank_threshold} across all roles.")
-    else:
-        if display_option == "Scores":
+        else:
+            if display_option == "Scores":
             df_to_display = score_pivot.loc[top_n_players.index]
             st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
-        else:
+            else:
             df_to_display = rank_pivot.loc[top_n_players.index]
             st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
 else:
