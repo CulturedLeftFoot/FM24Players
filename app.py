@@ -315,7 +315,7 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
         rank_pivot = results_df.pivot(index="Player", columns="Role", values="Rank")
 
         # Apply filter: player must be within top N in all roles they have a score for
-        mask_top_n = rank_pivot.apply(lambda row: row.dropna().max() <= rank_threshold, axis=1)
+        mask_outside_top_n = rank_pivot.apply(lambda row: row.dropna().min() > rank_threshold, axis=1)
         top_n_players = rank_pivot[mask_top_n]
 
         if top_n_players.empty:
