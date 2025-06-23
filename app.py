@@ -307,28 +307,25 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     st.dataframe(styled_filtered_df, use_container_width=True)
 
     with st.expander("🎯 Filter Players Ranked Top N in Every Role", expanded=False):
-    rank_threshold = st.selectbox("Show only players ranked within top N across all roles:", [5, 10, 12], index=1)
+    rank_threshold = st.selectbox("Only show players ranked in top N across all roles:", [5, 10, 12], index=1)
+    display_option = st.radio("View:", ["Scores", "Ranks"], horizontal=True)
 
+    # Create pivot tables
+    score_pivot = results_df.pivot(index="Player", columns="Role", values="Score")
     rank_pivot = results_df.pivot(index="Player", columns="Role", values="Rank")
 
-    # Filter players who are ranked within top N in *every* role
-    mask_top_n = rank_pivot.apply(lambda row: row.max() <= rank_threshold, axis=1)
+    # Apply filter: player must be within top N in all roles they have a score for
+    mask_top_n = rank_pivot.apply(lambda row: row.dropna().max() <= rank_threshold, axis=1)
     top_n_players = rank_pivot[mask_top_n]
 
     if top_n_players.empty:
         st.warning(f"No players are ranked in the top {rank_threshold} across all roles.")
     else:
-        # Optional: join with scores for display
-        score_pivot = results_df.pivot(index="Player", columns="Role", values="Score")
-        top_n_scores = score_pivot.loc[top_n_players.index]
-
-        def highlight_top_ranks(s):
-            return ['background-color: #004080; color: white' if not pd.isna(v) else '' for v in s]
-
-        st.dataframe(top_n_scores.style
-            .apply(highlight_top_ranks, axis=1)
-            .format("{:.2f}"),
-            use_container_width=True
-        )
+        if display_option == "Scores":
+            df_to_display = score_pivot.loc[top_n_players.index]
+            st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
+        else:
+            df_to_display = rank_pivot.loc[top_n_players.index]
+            st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
 else:
     st.info("Please upload a file to begin.")
