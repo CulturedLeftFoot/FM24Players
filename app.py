@@ -307,16 +307,16 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     st.dataframe(styled_filtered_df, use_container_width=True)
 
     with st.expander("🎯 Show Players Outside Top N in Every Role", expanded=False):
-    rank_threshold = st.selectbox("Only show players ranked *outside* top N across all roles:", [5, 10, 12], index=1)
-    display_option = st.radio("View:", ["Scores", "Ranks"], horizontal=True)
+        rank_threshold = st.selectbox("Only show players ranked *outside* top N across all roles:", [5, 10, 12], index=1)
+        display_option = st.radio("View:", ["Scores", "Ranks"], horizontal=True)
 
     # Create pivot tables
-    score_pivot = results_df.pivot(index="Player", columns="Role", values="Score")
-    rank_pivot = results_df.pivot(index="Player", columns="Role", values="Rank")
+        score_pivot = results_df.pivot(index="Player", columns="Role", values="Score")
+        rank_pivot = results_df.pivot(index="Player", columns="Role", values="Rank")
 
     # Filter: player must be ranked *worse than* N in all roles
-    mask_outside_top_n = rank_pivot.apply(lambda row: row.dropna().min() > rank_threshold, axis=1)
-    outside_top_n_players = rank_pivot[mask_outside_top_n]
+        mask_outside_top_n = rank_pivot.apply(lambda row: row.dropna().min() > rank_threshold, axis=1)
+        outside_top_n_players = rank_pivot[mask_outside_top_n]
 
     if outside_top_n_players.empty:
         st.warning(f"All players have at least one role ranked within top {rank_threshold}.")
