@@ -21,7 +21,7 @@ def password_gate():
 if password_gate():
     # ✅ Only show this if password was accepted
     uploaded_file = st.file_uploader(
-        "Upload your Squad Analysis xport HTML File that was taken using CLF's SquadAnalysis view",
+        "Upload your Players Role xport HTML File that was taken using CLF's OutfieldAtts view",
         type="html"
     )
     # you can continue your app logic here...
