@@ -52,7 +52,7 @@ def get_user_roles(user_id):
         return res.json().get("roles", [])
     return []
 
-query_params = st.experimental_get_query_params()
+query_params = st.query_params
 
 if "access_token" not in st.session_state:
     if "code" not in query_params:
