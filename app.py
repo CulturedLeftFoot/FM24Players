@@ -1,9 +1,83 @@
 import streamlit as st
 import pandas as pd
 import re
+import requests
+from urllib.parse import urlencode
+
+# Load credentials from secrets.toml
+CLIENT_ID = st.secrets["client_id"]
+CLIENT_SECRET = st.secrets["client_secret"]
+BOT_TOKEN = st.secrets["bot_token"]
+GUILD_ID = st.secrets["guild_id"]
+ALLOWED_ROLE_IDS = st.secrets["allowed_roles"]
+
+AUTH_URL = st.secrets["auth_url"]
+TOKEN_URL = st.secrets["token_url"]
+USER_URL = st.secrets["user_url"]
 
 st.set_page_config(page_title="Player Role Matcher", layout="wide")
 st.title("⚽ Player Role Matching Dashboard")
+
+def get_login_url():
+    params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "response_type": "code",
+        "scope": "identify guilds guilds.members.read"
+    }
+    return f"{AUTH_URL}?{urlencode(params)}"
+
+def exchange_code_for_token(code):
+    data = {
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": REDIRECT_URI,
+        "scope": "identify guilds guilds.members.read"
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    return requests.post(TOKEN_URL, data=data, headers=headers).json()
+
+def get_user_info(token):
+    headers = {"Authorization": f"Bearer {token}"}
+    return requests.get(USER_URL, headers=headers).json()
+
+def get_user_roles(user_id):
+    headers = {"Authorization": f"Bot {BOT_TOKEN}"}
+    url = f"https://discord.com/api/guilds/{GUILD_ID}/members/{user_id}"
+    res = requests.get(url, headers=headers)
+    if res.status_code == 200:
+        return res.json().get("roles", [])
+    return []
+
+query_params = st.experimental_get_query_params()
+
+if "access_token" not in st.session_state:
+    if "code" not in query_params:
+        login_url = get_login_url()
+        st.markdown(f"[🔐 Login with Discord]({login_url})", unsafe_allow_html=True)
+        st.stop()
+    else:
+        token_data = exchange_code_for_token(query_params["code"][0])
+        access_token = token_data.get("access_token")
+        if access_token:
+            user = get_user_info(access_token)
+            user_roles = get_user_roles(user["id"])
+
+            if any(role in ALLOWED_ROLE_IDS for role in user_roles):
+                st.session_state["access_token"] = access_token
+                st.session_state["user"] = user
+                st.success(f"✅ Welcome {user['username']}#{user['discriminator']}")
+            else:
+                st.error("🚫 You do not have access to use this tool.")
+                st.stop()
+        else:
+            st.error("Failed to authenticate with Discord.")
+            st.stop()
+else:
+    user = st.session_state["user"]
+    st.info(f"Logged in as {user['username']}#{user['discriminator']}")
 
 # Upload HTML file
 uploaded_file = st.file_uploader("Upload your SquadAnalysis HTML file", type=["html"])
