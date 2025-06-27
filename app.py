@@ -57,8 +57,10 @@ query_params = st.query_params
 if "access_token" not in st.session_state:
     if "code" not in query_params:
         login_url = get_login_url()
-        if st.button("🔐 Login with Discord"):
-            st.markdown(f"<script>window.location.href = '{login_url}';</script>", unsafe_allow_html=True)
+        with st.form("login_form"):
+            st.form_submit_button("🔐 Login with Discord")
+            st.experimental_set_query_params()  # clear any old code params
+            st.markdown(f'<meta http-equiv="refresh" content="0; url={login_url}">', unsafe_allow_html=True)
             st.stop()
     else:
         token_data = exchange_code_for_token(query_params["code"][0])
