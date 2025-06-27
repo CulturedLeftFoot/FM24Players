@@ -62,17 +62,23 @@ if "access_token" not in st.session_state:
     else:
         token_data = exchange_code_for_token(query_params["code"][0])
         access_token = token_data.get("access_token")
-        if access_token:
-            user = get_user_info(access_token)
-            user_roles = get_user_roles(user["id"])
+       if "access_token" in token_data:
+    access_token = token_data["access_token"]
+    user = get_user_info(access_token)
+    user_roles = get_user_roles(user["id"])
 
-            if any(role in ALLOWED_ROLE_IDS for role in user_roles):
-                st.session_state["access_token"] = access_token
-                st.session_state["user"] = user
-                st.success(f"✅ Welcome {user['username']}#{user['discriminator']}")
-            else:
-                st.error("🚫 You do not have access to use this tool.")
-                st.stop()
+    if any(role in ALLOWED_ROLE_IDS for role in user_roles):
+        st.session_state["access_token"] = access_token
+        st.session_state["user"] = user
+        st.success(f"✅ Welcome {user['username']}#{user['discriminator']}")
+    else:
+        st.error("🚫 You do not have access to use this tool.")
+        st.stop()
+else:
+    st.error("❌ Failed to authenticate with Discord. Here’s the full response:")
+    st.json(token_data)  # <-- THIS shows you what Discord returned
+    st.stop()
+
         else:
             st.error("Failed to authenticate with Discord.")
             st.stop()
