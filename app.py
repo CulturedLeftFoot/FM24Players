@@ -62,7 +62,7 @@ if "access_token" not in st.session_state:
     else:
         token_data = exchange_code_for_token(query_params["code"][0])
         access_token = token_data.get("access_token")
-       if "access_token" in token_data:
+        if "access_token" in token_data:
         access_token = token_data["access_token"]
         user = get_user_info(access_token)
         user_roles = get_user_roles(user["id"])
