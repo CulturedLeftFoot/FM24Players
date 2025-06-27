@@ -14,6 +14,7 @@ ALLOWED_ROLE_IDS = st.secrets["allowed_roles"]
 AUTH_URL = st.secrets["auth_url"]
 TOKEN_URL = st.secrets["token_url"]
 USER_URL = st.secrets["user_url"]
+REDIRECT_URI = "https://fm24players.streamlit.app"
 
 st.set_page_config(page_title="Player Role Matcher", layout="wide")
 st.title("⚽ Player Role Matching Dashboard")
