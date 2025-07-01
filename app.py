@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 st.set_page_config(layout="wide")
 
 # Define allowed passwords
-AUTHORIZED_PASSWORDS = ["CLF123"]
+PASSWORD = st.secrets["general"]["password"]
 
 def password_gate():
     st.title("🔒 Restricted Access for YT Members and Twitch Subscribers")
