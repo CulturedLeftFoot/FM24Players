@@ -4,35 +4,23 @@ import re
 import requests
 from urllib.parse import urlencode
 
-
 # Clear all Streamlit caches
 st.cache_data.clear()
 st.cache_resource.clear()
+
 st.set_page_config(layout="wide")
+st.title("🔐 Smart Scouting Tool – Visuals")
 
-# Define allowed passwords
 PASSWORD = st.secrets["general"]["password"]
+password = st.text_input("Enter password to access the scouting tool", type="password")
 
-def password_gate():
-    st.title("🔒 Restricted Access for YT Members and Twitch Subscribers")
-    password = st.text_input("Enter password", type="password")
-    if password:
-        if password in AUTHORIZED_PASSWORDS:
-            return True
-        else:
-            st.error("Incorrect password.")
-    return False  # if password is blank or wrong
+if password != PASSWORD:
+    st.warning("Please enter the correct password to continue.")
+    st.stop()
 
-# 🔐 Run the gate
-if password_gate():
-    # ✅ Only show this if password was accepted
-    uploaded_file = st.file_uploader(
-        "Upload your Players Role xport HTML File that was taken using CLF's OutfieldAtts view",
-        type="html"
-    )
-    # you can continue your app logic here...
-else:
-    st.stop()  # 👈 prevents app from rendering beyond this point
+st.success("Access granted!")
+
+uploaded_file = st.file_uploader("Upload the Full Data Export HTML File", type="html")
 
 if uploaded_file:
     try:
