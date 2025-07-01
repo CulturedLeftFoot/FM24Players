@@ -4,6 +4,10 @@ import re
 import requests
 from urllib.parse import urlencode
 
+
+# Clear all Streamlit caches
+st.cache_data.clear()
+st.cache_resource.clear()
 st.set_page_config(layout="wide")
 
 # Define allowed passwords
