@@ -4,6 +4,8 @@ import re
 import requests
 from urllib.parse import urlencode
 
+st.set_page_config(layout="wide")
+
 # Define allowed passwords
 AUTHORIZED_PASSWORDS = ["CLF123"]
 
