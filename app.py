@@ -9,7 +9,7 @@ st.cache_data.clear()
 st.cache_resource.clear()
 
 st.set_page_config(layout="wide")
-st.title("🔐 Smart Scouting Tool – Visuals")
+st.title("🔐 Smart Player Role Tool")
 
 PASSWORD = st.secrets["general"]["password"]
 password = st.text_input("Enter password to access the scouting tool", type="password")
