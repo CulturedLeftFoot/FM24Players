@@ -11,24 +11,19 @@ st.cache_resource.clear()
 st.set_page_config(layout="wide")
 st.title("🔐 Smart Player Role Tool")
 
-PASSWORD = st.secrets["general"]["password"]
-password = st.text_input("Enter password to access the scouting tool", type="password")
+st.title("Smart Player Role Tool")
 
-if password != PASSWORD:
-    st.warning("Please enter the correct password to continue.")
-    st.stop()
-
-st.success("Access granted!")
-
-uploaded_file = st.file_uploader("Upload the Full Data Export HTML File", type="html")
+uploaded_file = st.file_uploader(
+    "Upload the Full Data Export Excel File",
+    type=["xlsx", "xls"]
+)
 
 if uploaded_file:
     try:
-        tables = pd.read_html(uploaded_file)
-        attributes_df = tables[0]  # Use the first table found
+        attributes_df = pd.read_excel(uploaded_file)
         attributes_df.columns = attributes_df.columns.str.strip()
     except Exception as e:
-        st.error(f"Failed to read HTML table: {e}")
+        st.error(f"Failed to read Excel file: {e}")
         st.stop()
 
     # Load formulas
