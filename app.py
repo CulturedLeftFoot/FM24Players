@@ -14,16 +14,22 @@ st.title("🔐 Smart Player Role Tool")
 st.title("Smart Player Role Tool")
 
 uploaded_file = st.file_uploader(
-    "Upload the Full Data Export Excel File",
-    type=["xlsx", "xls"]
+    "Upload your Football Manager data file",
+    type=["xlsx", "xls", "csv"]
 )
 
 if uploaded_file:
     try:
-        attributes_df = pd.read_excel(uploaded_file)
+        # Read file based on extension
+        if uploaded_file.name.endswith(".csv"):
+            attributes_df = pd.read_csv(uploaded_file)
+        else:
+            attributes_df = pd.read_excel(uploaded_file)
+
         attributes_df.columns = attributes_df.columns.str.strip()
+
     except Exception as e:
-        st.error(f"Failed to read Excel file: {e}")
+        st.error(f"Failed to read file: {e}")
         st.stop()
 
     # Load formulas
