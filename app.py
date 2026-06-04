@@ -9,8 +9,6 @@ st.cache_data.clear()
 st.cache_resource.clear()
 
 st.set_page_config(layout="wide")
-st.title("🔐 Smart Player Role Tool")
-
 st.title("Smart Player Role Tool")
 
 uploaded_file = st.file_uploader(
@@ -208,48 +206,69 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
 
 
     column_map = {
-    "Player": "Name",
-    "Decisions": "Dec",
-    "Long Throws": "L Th",
-    "Passing": "Pas",
-    "Technique": "Tec",
-    "Tackling": "Tck",
-    "Penalty Taking": "Pen",
-    "Marking": "Mar",
-    "Long Shots": "Lon",
-    "Heading": "Hea",
-    "Crossing": "Cro",
-    "First Touch": "Fir",
-    "Free Kick Taking": "Fre",
-    "Finishing": "Fin",
-    "Dribbling": "Dri",
-    "Corners": "Cor",
-    "Acceleration": "Acc",
-    "Work Rate": "Wor",
-    "Vision": "Vis",
-    "Team Work": "Tea",
-    "Positioning": "Pos",
-    "Off The Ball": "OtB",
-    "Leadership": "Ldr",
-    "Flair": "Fla",
-    "Determination": "Det",
-    "Concentration": "Cnt",
-    "Composure": "Cmp",
-    "Bravery": "Bra",
-    "Anticipation": "Ant",
-    "Aggression": "Agg",
-    "Agility": "Agi",
-    "Balance": "Bal",
-    "Jumping Reach": "Jum",
-    "Natural Fitness": "Nat",
-    "Pace": "Pac",
-    "Stamina": "Sta",
-    "Strength": "Str"
-}
+        "Player": "Name",
+        "Decisions": "Dec",
+        "Long Throws": "L Th",
+        "Passing": "Pas",
+        "Technique": "Tec",
+        "Tackling": "Tck",
+        "Penalty Taking": "Pen",
+        "Marking": "Mar",
+        "Long Shots": "Lon",
+        "Heading": "Hea",
+        "Crossing": "Cro",
+        "First Touch": "Fir",
+        "Free Kick Taking": "Fre",
+        "Finishing": "Fin",
+        "Dribbling": "Dri",
+        "Corners": "Cor",
+        "Acceleration": "Acc",
+        "Work Rate": "Wor",
+        "Vision": "Vis",
+        "Team Work": "Tea",
+        "Teamwork": "Tea",
+        "Positioning": "Pos",
+        "Off The Ball": "OtB",
+        "Leadership": "Ldr",
+        "Flair": "Fla",
+        "Determination": "Det",
+        "Concentration": "Cnt",
+        "Composure": "Cmp",
+        "Bravery": "Bra",
+        "Anticipation": "Ant",
+        "Aggression": "Agg",
+        "Agility": "Agi",
+        "Balance": "Bal",
+        "Jumping Reach": "Jum",
+        "Natural Fitness": "Nat",
+        "Pace": "Pac",
+        "Stamina": "Sta",
+        "Strength": "Str"
+    }
 
-attributes_df = attributes_df.rename(columns=column_map)
+    attributes_df = attributes_df.rename(columns=column_map)
+
+    if "Name" not in attributes_df.columns:
+        st.error("Could not find a player name column. Your file needs a column called 'Player' or 'Name'.")
+        st.write("Columns found:", list(attributes_df.columns))
+        st.stop()
+
+    # Convert all attribute columns used in the formulas to numbers.
+    formula_attributes = sorted(set(re.findall(r"Attributes\[(\w+)\]", formula_text)))
+    missing_attributes = [attr for attr in formula_attributes if attr not in attributes_df.columns]
+
+    if missing_attributes:
+        st.warning(
+            "Some attributes used in the formulas were not found in your upload. "
+            "They will be treated as 0: " + ", ".join(missing_attributes)
+        )
+
+    for attr in formula_attributes:
+        if attr in attributes_df.columns:
+            attributes_df[attr] = pd.to_numeric(attributes_df[attr], errors="coerce").fillna(0)
+
     players_data = {
-        row["Player"]: row.to_dict()
+        row["Name"]: row.to_dict()
         for _, row in attributes_df.iterrows()
     }
 
