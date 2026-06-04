@@ -206,8 +206,50 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
         except:
             return None
 
+
+    column_map = {
+    "Player": "Name",
+    "Decisions": "Dec",
+    "Long Throws": "L Th",
+    "Passing": "Pas",
+    "Technique": "Tec",
+    "Tackling": "Tck",
+    "Penalty Taking": "Pen",
+    "Marking": "Mar",
+    "Long Shots": "Lon",
+    "Heading": "Hea",
+    "Crossing": "Cro",
+    "First Touch": "Fir",
+    "Free Kick Taking": "Fre",
+    "Finishing": "Fin",
+    "Dribbling": "Dri",
+    "Corners": "Cor",
+    "Acceleration": "Acc",
+    "Work Rate": "Wor",
+    "Vision": "Vis",
+    "Team Work": "Tea",
+    "Positioning": "Pos",
+    "Off The Ball": "OtB",
+    "Leadership": "Ldr",
+    "Flair": "Fla",
+    "Determination": "Det",
+    "Concentration": "Cnt",
+    "Composure": "Cmp",
+    "Bravery": "Bra",
+    "Anticipation": "Ant",
+    "Aggression": "Agg",
+    "Agility": "Agi",
+    "Balance": "Bal",
+    "Jumping Reach": "Jum",
+    "Natural Fitness": "Nat",
+    "Pace": "Pac",
+    "Stamina": "Sta",
+    "Strength": "Str"
+}
+
+attributes_df = attributes_df.rename(columns=column_map)
     players_data = {
-        row["Name"]: row.to_dict()
+        row["Player"]: row.to_dict()
         for _, row in attributes_df.iterrows()
     }
 
