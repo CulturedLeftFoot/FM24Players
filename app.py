@@ -266,7 +266,13 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
     for attr in formula_attributes:
         if attr in attributes_df.columns:
             attributes_df[attr] = pd.to_numeric(attributes_df[attr], errors="coerce").fillna(0)
-
+            
+    # Remove Goalkeepers
+    if "Best Pos" in attributes_df.columns:
+        attributes_df = attributes_df[
+            ~attributes_df["Best Pos"].astype(str).str.contains("GK", case=False, na=False)
+        ]
+        
     players_data = {
         row["Name"]: row.to_dict()
         for _, row in attributes_df.iterrows()
