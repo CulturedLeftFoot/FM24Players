@@ -335,6 +335,148 @@ role_area_groups = {
 
 area_order = ["Defensive", "Midfield", "Attacking"]
 
+
+# Broad position groups used for optional role filtering.
+# The filter is intentionally broad so players are not over-restricted.
+role_position_groups = {
+    # Centre-backs
+    "Centre-Back": ["CB"],
+    "Ball-Playing Centre-Back": ["CB"],
+    "No-Nonsense Centre-Back": ["CB"],
+    "Wide Centre-Back": ["CB", "FB", "WB"],
+    "Advanced Centre-Back": ["CB"],
+    "Overlapping Centre-Back": ["CB", "FB", "WB"],
+    "Covering Centre-Back": ["CB"],
+    "Stopping Centre-Back": ["CB"],
+    "Covering Wide Centre-Back": ["CB", "FB", "WB"],
+    "Stopping Wide Centre-Back": ["CB", "FB", "WB"],
+
+    # Full-backs / wing-backs
+    "Full-Back": ["FB", "WB"],
+    "Inside Full-Back": ["FB", "WB", "CB"],
+    "Inside Wing-Back": ["FB", "WB", "DM", "CM"],
+    "Playmaking Wing-Back": ["FB", "WB", "CM", "WM"],
+    "Wing-Back": ["FB", "WB", "WM"],
+    "Advanced Wing-Back": ["FB", "WB", "WM", "W"],
+    "Holding Full-Back": ["FB", "WB"],
+    "Pressing Full-Back": ["FB", "WB"],
+    "Holding Wing-Back": ["FB", "WB"],
+    "Pressing Wing-Back": ["FB", "WB", "WM", "W"],
+
+    # Defensive midfield / central midfield
+    "Defensive Midfielder": ["DM", "CM"],
+    "Box-to-Box Midfielder": ["DM", "CM"],
+    "Box-to-Box Playmaker": ["DM", "CM"],
+    "Deep-Lying Playmaker": ["DM", "CM"],
+    "Half-Back": ["DM", "CB"],
+    "Dropping Defensive Midfielder": ["DM", "CM", "CB"],
+    "Pressing Defensive Midfielder": ["DM", "CM"],
+    "Screening Defensive Midfielder": ["DM", "CM"],
+    "Wide Covering Defensive Midfielder": ["DM", "CM", "FB", "WB"],
+
+    # Central midfield
+    "Central Midfielder": ["CM", "DM", "AM"],
+    "Advanced Playmaker": ["CM", "AM", "DM"],
+    "Midfield Playmaker": ["CM", "DM", "AM"],
+    "Wide Central Midfielder": ["CM", "WM", "W"],
+    "Pressing Central Midfielder": ["CM", "DM", "AM"],
+    "Screening Central Midfielder": ["CM", "DM"],
+    "Wide Covering Central Midfielder": ["CM", "DM", "WM", "W"],
+
+    # Wide midfield / wide attackers
+    "Wide Midfielder": ["WM", "W", "FB", "WB"],
+    "Inside Winger": ["WM", "W", "AM"],
+    "Playmaking Winger": ["WM", "W", "AM"],
+    "Winger": ["WM", "W", "AM"],
+    "Tracking Wide Midfielder": ["WM", "W", "FB", "WB"],
+    "Wide Outlet Wide Midfielder": ["WM", "W", "AM"],
+    "Inside Outlet Winger": ["WM", "W", "AM", "ST"],
+    "Tracking Winger": ["WM", "W", "AM"],
+    "Wide Outlet Winger": ["WM", "W", "AM"],
+
+    # Attacking midfield / forwards
+    "Attacking Midfielder": ["AM", "CM", "W", "ST"],
+    "Channel Midfielder": ["AM", "CM", "WM", "W"],
+    "Free Role": ["AM", "CM", "W", "ST"],
+    "Second Striker": ["AM", "ST"],
+    "Central Outlet Attacking Midfielder": ["AM", "CM", "ST"],
+    "Splitting Outlet Attacking Midfielder": ["AM", "W", "ST"],
+    "Tracking Attacking Midfielder": ["AM", "CM", "WM"],
+
+    # Strikers
+    "Wide Forward": ["W", "AM", "ST"],
+    "Inside Forward": ["W", "AM", "ST"],
+    "Centre Forward": ["ST"],
+    "Channel Forward": ["ST", "W", "AM"],
+    "Deep-Lying Forward": ["ST", "AM"],
+    "False Nine": ["ST", "AM"],
+    "Poacher": ["ST"],
+    "Target Forward": ["ST"],
+    "Central Outlet Centre Forward": ["ST"],
+    "Splitting Outlet Centre Forward": ["ST", "W", "AM"],
+    "Tracking Centre Forward": ["ST", "AM"],
+}
+
+
+def infer_position_groups(position_text):
+    """Convert FM position text into broad groups used by this app."""
+    text = str(position_text).upper()
+    groups = set()
+
+    if any(token in text for token in ["D (C)", "DC", "CB", "CENTRE-BACK", "CENTER-BACK"]):
+        groups.add("CB")
+    if any(token in text for token in ["D (R)", "D (L)", "DR", "DL", "RB", "LB", "FULL-BACK", "FULL BACK"]):
+        groups.add("FB")
+    if any(token in text for token in ["WB", "WING-BACK", "WING BACK"]):
+        groups.add("WB")
+    if any(token in text for token in ["DM", "DEFENSIVE MIDFIELDER"]):
+        groups.add("DM")
+    if any(token in text for token in ["M (C)", "MC", "CM", "CENTRAL MIDFIELDER", "MIDFIELDER CENTRE"]):
+        groups.add("CM")
+    if any(token in text for token in ["M (R)", "M (L)", "MR", "ML", "RM", "LM", "WIDE MIDFIELDER"]):
+        groups.add("WM")
+    if any(token in text for token in ["AM (C)", "AMC", "AM C", "ATTACKING MIDFIELDER"]):
+        groups.add("AM")
+    if any(token in text for token in ["AM (R)", "AM (L)", "AMR", "AML", "RW", "LW", "WINGER", "INSIDE FORWARD"]):
+        groups.add("W")
+    if any(token in text for token in ["ST", "STRIKER", "CENTRE FORWARD", "CENTER FORWARD"]):
+        groups.add("ST")
+
+    return groups
+
+
+def role_matches_player_position(role, player_position_groups):
+    allowed_groups = set(role_position_groups.get(role, []))
+    if not allowed_groups or not player_position_groups:
+        return True
+    return bool(allowed_groups.intersection(player_position_groups))
+
+
+def build_best_role_summary(results):
+    if results.empty:
+        return pd.DataFrame()
+
+    idx = results.groupby(["Player", "Phase"])["Score"].idxmax()
+    best = results.loc[idx, ["Player", "Phase", "Role", "Score", "Area"]].copy()
+
+    rows = []
+    for player, player_best in best.groupby("Player"):
+        row = {"Player": player}
+        for phase in ["In Possession", "Out of Possession"]:
+            phase_best = player_best[player_best["Phase"] == phase]
+            if phase_best.empty:
+                row[f"Best {phase} Role"] = ""
+                row[f"Best {phase} Score"] = None
+                row[f"Best {phase} Area"] = ""
+            else:
+                item = phase_best.iloc[0]
+                row[f"Best {phase} Role"] = item["Role"]
+                row[f"Best {phase} Score"] = item["Score"]
+                row[f"Best {phase} Area"] = item["Area"]
+        rows.append(row)
+
+    return pd.DataFrame(rows)
+
 all_role_names = [
     role
     for phase in ["In Possession", "Out of Possession"]
@@ -435,6 +577,40 @@ if uploaded_file:
 
     st.success("Role scores calculated!")
 
+    position_column_options = [col for col in ["Best Pos", "Best Position", "Position", "Positions", "Natural Position"] if col in attributes_df.columns]
+    apply_position_filter = False
+    position_column = None
+
+    if position_column_options:
+        apply_position_filter = st.checkbox(
+            "Only show roles that match each player's position",
+            value=False,
+            help="Uses your position column to hide roles that are not relevant to each player's broad position group."
+        )
+        position_column = st.selectbox(
+            "Position column to use for filtering:",
+            position_column_options,
+            index=0
+        )
+    else:
+        st.info("Position filtering is unavailable because no position column was found. Add a column like 'Best Pos' or 'Position' to enable it.")
+
+    if apply_position_filter and position_column:
+        player_position_groups = {
+            row["Name"]: infer_position_groups(row.get(position_column, ""))
+            for _, row in attributes_df.iterrows()
+        }
+        results_df = results_df[
+            results_df.apply(
+                lambda row: role_matches_player_position(
+                    row["Role"],
+                    player_position_groups.get(row["Player"], set())
+                ),
+                axis=1
+            )
+        ].copy()
+        results_df["Rank"] = results_df.groupby("Role")["Score"].rank(ascending=False, method="min")
+
     phase_filter = st.radio(
         "Choose role phase to view:",
         ["All", "In Possession", "Out of Possession"],
@@ -458,6 +634,19 @@ if uploaded_file:
     if visible_results_df.empty:
         st.warning("No roles match the selected filters.")
         st.stop()
+
+    with st.expander("Best Role Summary", expanded=True):
+        summary_df = build_best_role_summary(visible_results_df)
+        if summary_df.empty:
+            st.warning("No best role summary available for the selected filters.")
+        else:
+            score_cols = [col for col in summary_df.columns if col.endswith("Score")]
+            sort_col = score_cols[0] if score_cols else "Player"
+            display_summary_df = summary_df.sort_values(by=sort_col, ascending=False if score_cols else True)
+            st.dataframe(
+                display_summary_df.style.format({col: "{:.2f}" for col in score_cols}),
+                use_container_width=True
+            )
 
     with st.expander("View Top Player Per Role", expanded=False):
         top_players = visible_results_df.loc[
