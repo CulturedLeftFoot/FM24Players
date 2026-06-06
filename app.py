@@ -261,6 +261,80 @@ role_groups = {
     for role in roles.keys()
 }
 
+
+role_area_groups = {
+    # Defensive roles
+    "Centre-Back": "Defensive",
+    "Ball-Playing Centre-Back": "Defensive",
+    "No-Nonsense Centre-Back": "Defensive",
+    "Wide Centre-Back": "Defensive",
+    "Advanced Centre-Back": "Defensive",
+    "Overlapping Centre-Back": "Defensive",
+    "Full-Back": "Defensive",
+    "Inside Full-Back": "Defensive",
+    "Inside Wing-Back": "Defensive",
+    "Playmaking Wing-Back": "Defensive",
+    "Wing-Back": "Defensive",
+    "Advanced Wing-Back": "Defensive",
+    "Covering Centre-Back": "Defensive",
+    "Stopping Centre-Back": "Defensive",
+    "Covering Wide Centre-Back": "Defensive",
+    "Stopping Wide Centre-Back": "Defensive",
+    "Holding Full-Back": "Defensive",
+    "Pressing Full-Back": "Defensive",
+    "Holding Wing-Back": "Defensive",
+    "Pressing Wing-Back": "Defensive",
+
+    # Midfield roles
+    "Defensive Midfielder": "Midfield",
+    "Box-to-Box Midfielder": "Midfield",
+    "Box-to-Box Playmaker": "Midfield",
+    "Deep-Lying Playmaker": "Midfield",
+    "Half-Back": "Midfield",
+    "Central Midfielder": "Midfield",
+    "Advanced Playmaker": "Midfield",
+    "Midfield Playmaker": "Midfield",
+    "Wide Central Midfielder": "Midfield",
+    "Wide Midfielder": "Midfield",
+    "Inside Winger": "Midfield",
+    "Playmaking Winger": "Midfield",
+    "Winger": "Midfield",
+    "Dropping Defensive Midfielder": "Midfield",
+    "Pressing Defensive Midfielder": "Midfield",
+    "Screening Defensive Midfielder": "Midfield",
+    "Wide Covering Defensive Midfielder": "Midfield",
+    "Pressing Central Midfielder": "Midfield",
+    "Screening Central Midfielder": "Midfield",
+    "Wide Covering Central Midfielder": "Midfield",
+    "Tracking Wide Midfielder": "Midfield",
+    "Wide Outlet Wide Midfielder": "Midfield",
+
+    # Attacking roles
+    "Attacking Midfielder": "Attacking",
+    "Channel Midfielder": "Attacking",
+    "Free Role": "Attacking",
+    "Second Striker": "Attacking",
+    "Wide Forward": "Attacking",
+    "Inside Forward": "Attacking",
+    "Centre Forward": "Attacking",
+    "Channel Forward": "Attacking",
+    "Deep-Lying Forward": "Attacking",
+    "False Nine": "Attacking",
+    "Poacher": "Attacking",
+    "Target Forward": "Attacking",
+    "Central Outlet Attacking Midfielder": "Attacking",
+    "Splitting Outlet Attacking Midfielder": "Attacking",
+    "Tracking Attacking Midfielder": "Attacking",
+    "Inside Outlet Winger": "Attacking",
+    "Tracking Winger": "Attacking",
+    "Wide Outlet Winger": "Attacking",
+    "Central Outlet Centre Forward": "Attacking",
+    "Splitting Outlet Centre Forward": "Attacking",
+    "Tracking Centre Forward": "Attacking",
+}
+
+area_order = ["Defensive", "Midfield", "Attacking"]
+
 all_role_names = [
     role
     for phase in ["In Possession", "Out of Possession"]
@@ -300,6 +374,7 @@ def calculate_role_scores(df):
                 results.append({
                     "Player": player,
                     "Phase": phase,
+                    "Area": role_area_groups.get(role, "Midfield"),
                     "Role": role,
                     "Score": score
                 })
@@ -366,17 +441,30 @@ if uploaded_file:
         horizontal=True
     )
 
-    if phase_filter == "All":
-        visible_results_df = results_df.copy()
-    else:
-        visible_results_df = results_df[results_df["Phase"] == phase_filter].copy()
+    area_filter = st.radio(
+        "Choose role area to view:",
+        ["All", "Defensive", "Midfield", "Attacking"],
+        horizontal=True
+    )
+
+    visible_results_df = results_df.copy()
+
+    if phase_filter != "All":
+        visible_results_df = visible_results_df[visible_results_df["Phase"] == phase_filter].copy()
+
+    if area_filter != "All":
+        visible_results_df = visible_results_df[visible_results_df["Area"] == area_filter].copy()
+
+    if visible_results_df.empty:
+        st.warning("No roles match the selected filters.")
+        st.stop()
 
     with st.expander("View Top Player Per Role", expanded=False):
         top_players = visible_results_df.loc[
             visible_results_df.groupby("Role")["Score"].idxmax()
         ].reset_index(drop=True)
         st.dataframe(
-            top_players.sort_values(by=["Phase", "Role"]),
+            top_players.sort_values(by=["Phase", "Area", "Role"]),
             use_container_width=True
         )
 
@@ -384,8 +472,8 @@ if uploaded_file:
         player_list = sorted(visible_results_df["Player"].unique().tolist())
         selected_player = st.selectbox("Select a player to view their roles:", player_list)
         player_roles = visible_results_df[visible_results_df["Player"] == selected_player].sort_values(
-            by=["Phase", "Score"],
-            ascending=[True, False]
+            by=["Phase", "Area", "Score"],
+            ascending=[True, True, False]
         )
         st.dataframe(player_roles, use_container_width=True)
 
@@ -413,7 +501,11 @@ if uploaded_file:
             mask = pivot_df.apply(lambda row: row.between(score_range[0], score_range[1]).any(), axis=1)
             filtered_df = pivot_df[mask]
 
-            ordered_roles = [role for role in all_role_names if role in filtered_df.columns]
+            selected_roles = visible_results_df[["Role", "Area", "Phase"]].drop_duplicates()
+            selected_roles["AreaOrder"] = selected_roles["Area"].apply(lambda x: area_order.index(x) if x in area_order else 99)
+            selected_roles["PhaseOrder"] = selected_roles["Phase"].apply(lambda x: 0 if x == "In Possession" else 1)
+            ordered_roles = selected_roles.sort_values(["PhaseOrder", "AreaOrder", "Role"])["Role"].tolist()
+            ordered_roles = [role for role in ordered_roles if role in filtered_df.columns]
             filtered_df = filtered_df[ordered_roles]
 
             styled_filtered_df = (
@@ -443,11 +535,19 @@ if uploaded_file:
         else:
             if display_option == "Scores":
                 df_to_display = score_pivot.loc[outside_top_n_players.index]
-                df_to_display = df_to_display[[role for role in all_role_names if role in df_to_display.columns]]
+                selected_roles = visible_results_df[["Role", "Area", "Phase"]].drop_duplicates()
+                selected_roles["AreaOrder"] = selected_roles["Area"].apply(lambda x: area_order.index(x) if x in area_order else 99)
+                selected_roles["PhaseOrder"] = selected_roles["Phase"].apply(lambda x: 0 if x == "In Possession" else 1)
+                ordered_roles = selected_roles.sort_values(["PhaseOrder", "AreaOrder", "Role"])["Role"].tolist()
+                df_to_display = df_to_display[[role for role in ordered_roles if role in df_to_display.columns]]
                 st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
             else:
                 df_to_display = rank_pivot.loc[outside_top_n_players.index]
-                df_to_display = df_to_display[[role for role in all_role_names if role in df_to_display.columns]]
+                selected_roles = visible_results_df[["Role", "Area", "Phase"]].drop_duplicates()
+                selected_roles["AreaOrder"] = selected_roles["Area"].apply(lambda x: area_order.index(x) if x in area_order else 99)
+                selected_roles["PhaseOrder"] = selected_roles["Phase"].apply(lambda x: 0 if x == "In Possession" else 1)
+                ordered_roles = selected_roles.sort_values(["PhaseOrder", "AreaOrder", "Role"])["Role"].tolist()
+                df_to_display = df_to_display[[role for role in ordered_roles if role in df_to_display.columns]]
                 st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
 else:
     st.info("Please upload a file to begin.")
