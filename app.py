@@ -1,8 +1,5 @@
 import streamlit as st
 import pandas as pd
-import re
-import requests
-from urllib.parse import urlencode
 
 # Clear all Streamlit caches
 st.cache_data.clear()
@@ -16,10 +13,308 @@ uploaded_file = st.file_uploader(
     type=["xlsx", "xls", "csv"]
 )
 
+column_map = {
+    "Player": "Name",
+    "Decisions": "Dec",
+    "Long Throws": "L Th",
+    "Passing": "Pas",
+    "Technique": "Tec",
+    "Tackling": "Tck",
+    "Penalty Taking": "Pen",
+    "Marking": "Mar",
+    "Long Shots": "Lon",
+    "Heading": "Hea",
+    "Crossing": "Cro",
+    "First Touch": "Fir",
+    "Free Kick Taking": "Fre",
+    "Finishing": "Fin",
+    "Dribbling": "Dri",
+    "Corners": "Cor",
+    "Acceleration": "Acc",
+    "Work Rate": "Wor",
+    "Vision": "Vis",
+    "Team Work": "Tea",
+    "Teamwork": "Tea",
+    "Positioning": "Pos",
+    "Off The Ball": "OtB",
+    "Off the Ball": "OtB",
+    "Leadership": "Ldr",
+    "Flair": "Fla",
+    "Determination": "Det",
+    "Concentration": "Cnt",
+    "Composure": "Cmp",
+    "Bravery": "Bra",
+    "Anticipation": "Ant",
+    "Aggression": "Agg",
+    "Agility": "Agi",
+    "Balance": "Bal",
+    "Jumping Reach": "Jum",
+    "Jumping": "Jum",
+    "Natural Fitness": "Nat",
+    "Pace": "Pac",
+    "Stamina": "Sta",
+    "Strength": "Str"
+}
+
+# Role attributes are split into In Possession and Out of Possession.
+# Scoring uses 80% Key attributes and 20% Preferred attributes.
+# Roles with no Preferred attributes are scored from Key attributes only.
+role_attributes = {
+    "In Possession": {
+        # Centre-Backs
+        "Centre-Back": {
+            "key": ["Hea", "Mar", "Tck", "Ant", "Pos", "Jum", "Str"],
+            "preferred": ["Agg", "Bra", "Cmp", "Cnt", "Dec", "Pac"]
+        },
+        "Ball-Playing Centre-Back": {
+            "key": ["Hea", "Mar", "Pas", "Tck", "Ant", "Cmp", "Pos", "Jum", "Str"],
+            "preferred": ["Fir", "Tec", "Agg", "Bra", "Cnt", "Dec", "Vis", "Pac"]
+        },
+        "No-Nonsense Centre-Back": {
+            "key": ["Hea", "Mar", "Tck", "Ant", "Pos", "Jum", "Str"],
+            "preferred": ["Agg", "Bra", "Cnt", "Pac"]
+        },
+        "Wide Centre-Back": {
+            "key": ["Hea", "Mar", "Tck", "Ant", "Pos", "Jum", "Str"],
+            "preferred": ["Dri", "Agg", "Bra", "Cmp", "Cnt", "Dec", "Wor", "Acc", "Agi", "Pac", "Sta"]
+        },
+        "Advanced Centre-Back": {
+            "key": ["Hea", "Mar", "Pas", "Tck", "Tec", "Ant", "Cmp", "Dec", "Pos", "Tea", "Jum", "Str"],
+            "preferred": ["Dri", "Fir", "Agg", "Bra", "Cnt", "Vis", "Pac", "Sta"]
+        },
+        "Overlapping Centre-Back": {
+            "key": ["Cro", "Hea", "Mar", "Tck", "Ant", "Wor", "Jum", "Pac", "Sta", "Str"],
+            "preferred": ["Dri", "Tec", "Agg", "Bra", "Cmp", "Cnt", "Dec", "OtB", "Pos", "Acc", "Agi"]
+        },
+
+        # Full-Backs and Wing-Backs
+        "Full-Back": {
+            "key": ["Mar", "Tck", "Ant", "Cnt", "Pos", "Tea", "Acc"],
+            "preferred": ["Cro", "Dri", "Pas", "Tec", "Dec", "Wor", "Agi", "Pac", "Sta"]
+        },
+        "Inside Full-Back": {
+            "key": ["Hea", "Mar", "Tck", "Ant", "Pos", "Str"],
+            "preferred": ["Dri", "Agg", "Bra", "Cmp", "Cnt", "Dec", "Wor", "Acc", "Agi", "Jum", "Pac", "Sta"]
+        },
+        "Inside Wing-Back": {
+            "key": ["Pas", "Tck", "Ant", "Cmp", "Dec", "Pos", "Tea", "Acc"],
+            "preferred": ["Fir", "Mar", "Tec", "Cnt", "Wor", "Agi", "Pac", "Sta"]
+        },
+        "Playmaking Wing-Back": {
+            "key": ["Fir", "Pas", "Tck", "Tec", "Cmp", "Dec", "Pos", "Tea", "Vis", "Acc"],
+            "preferred": ["Cro", "Dri", "Mar", "Ant", "Cnt", "OtB", "Pos", "Wor", "Agi", "Pac", "Sta"]
+        },
+        "Wing-Back": {
+            "key": ["Cro", "Mar", "Tck", "Tea", "Wor", "Acc", "Pac", "Sta"],
+            "preferred": ["Dri", "Fir", "Pas", "Tec", "Ant", "Cnt", "Dec", "OtB", "Pos", "Agi", "Bal"]
+        },
+        "Advanced Wing-Back": {
+            "key": ["Cro", "Dri", "Tec", "OtB", "Tea", "Wor", "Acc", "Agi", "Pac", "Sta"],
+            "preferred": ["Fir", "Mar", "Pas", "Tck", "Ant", "Dec", "Fla", "Pos", "Bal"]
+        },
+
+        # Defensive Midfield
+        "Defensive Midfielder": {
+            "key": ["Tck", "Ant", "Cnt", "Pos", "Tea"],
+            "preferred": ["Fir", "Mar", "Pas", "Agg", "Cmp", "Dec", "Wor", "Sta", "Str"]
+        },
+        "Box-to-Box Midfielder": {
+            "key": ["Pas", "Tck", "OtB", "Tea", "Wor", "Sta"],
+            "preferred": ["Dri", "Fin", "Fir", "Lon", "Tec", "Agg", "Ant", "Cmp", "Dec", "Pos", "Acc", "Bal", "Pac", "Str"]
+        },
+        "Box-to-Box Playmaker": {
+            "key": ["Fir", "Pas", "Tec", "Cmp", "Dec", "OtB", "Tea", "Vis", "Wor", "Sta"],
+            "preferred": ["Dri", "Mar", "Tck", "Ant", "Pos", "Acc", "Agi", "Bal", "Pac"]
+        },
+        "Deep-Lying Playmaker": {
+            "key": ["Fir", "Pas", "Tec", "Cmp", "Dec", "OtB", "Tea", "Vis"],
+            "preferred": ["Mar", "Tck", "Ant", "Cnt", "Pos", "Wor", "Bal", "Sta"]
+        },
+        "Half-Back": {
+            "key": ["Hea", "Mar", "Tck", "Ant", "Cnt", "Pos", "Tea", "Jum", "Str"],
+            "preferred": ["Fir", "Pas", "Agg", "Bra", "Cmp", "Dec", "Wor", "Sta"]
+        },
+
+        # Central Midfield
+        "Central Midfielder": {
+            "key": ["Fir", "Pas", "Tck", "Dec", "Tea"],
+            "preferred": ["Tec", "Ant", "Cmp", "Cnt", "OtB", "Pos", "Vis", "Wor", "Sta"]
+        },
+        "Advanced Playmaker": {
+            "key": ["Fir", "Pas", "Tec", "Cmp", "Dec", "OtB", "Tea", "Vis"],
+            "preferred": ["Cro", "Dri", "Ant", "Fla", "Acc", "Agi"]
+        },
+        "Midfield Playmaker": {
+            "key": ["Fir", "Pas", "Tec", "Cmp", "Dec", "OtB", "Tea", "Vis"],
+            "preferred": ["Dri", "Tck", "Ant", "Fla", "Pos", "Wor", "Agi", "Sta"]
+        },
+        "Wide Central Midfielder": {
+            "key": ["Fir", "Pas", "Tck", "Dec", "Tea"],
+            "preferred": ["Cro", "Dri", "Tec", "Ant", "Cmp", "Cnt", "OtB", "Pos", "Vis", "Wor", "Agi", "Sta"]
+        },
+
+        # Wide Midfield and Wingers
+        "Wide Midfielder": {
+            "key": ["Cro", "Pas", "Tec", "Tea", "Wor", "Pac", "Sta"],
+            "preferred": ["Dri", "Fir", "Ant", "Cmp", "OtB", "Vis", "Acc", "Agi"]
+        },
+        "Inside Winger": {
+            "key": ["Dri", "Fir", "Tec", "Cmp", "Tea", "Acc", "Agi"],
+            "preferred": ["Cro", "Lon", "Pas", "Ant", "Fla", "OtB", "Vis", "Wor", "Bal", "Pac", "Sta"]
+        },
+        "Playmaking Winger": {
+            "key": ["Cro", "Dri", "Fir", "Pas", "Tec", "Cmp", "Dec", "OtB", "Tea", "Vis", "Acc"],
+            "preferred": ["Ant", "Fla", "Wor", "Agi", "Pac", "Sta"]
+        },
+        "Winger": {
+            "key": ["Cro", "Dri", "Tec", "Tea", "Acc", "Agi", "Pac"],
+            "preferred": ["Fir", "Pas", "Ant", "Fla", "OtB", "Wor", "Bal", "Sta"]
+        },
+
+        # Attacking Midfield
+        "Attacking Midfielder": {
+            "key": ["Fir", "Lon", "Pas", "Tec", "Cmp", "Fla", "OtB"],
+            "preferred": ["Cro", "Dri", "Fin", "Ant", "Dec", "Vis", "Acc", "Agi"]
+        },
+        "Channel Midfielder": {
+            "key": ["Cro", "Fir", "Pas", "Tec", "Cmp", "OtB", "Wor", "Acc"],
+            "preferred": ["Dri", "Lon", "Ant", "Dec", "Fla", "Vis", "Agi", "Pac", "Sta"]
+        },
+        "Free Role": {
+            "key": ["Dri", "Fir", "Lon", "Pas", "Tec", "Cmp", "Fla", "OtB", "Vis"],
+            "preferred": ["Cro", "Fin", "Ant", "Dec", "Acc", "Agi"]
+        },
+        "Second Striker": {
+            "key": ["Fin", "Fir", "Ant", "Cmp", "OtB", "Acc"],
+            "preferred": ["Dri", "Lon", "Pas", "Tec", "Cnt", "Dec", "Wor", "Agi", "Pac", "Sta"]
+        },
+
+        # Wide Forwards
+        "Wide Forward": {
+            "key": ["Dri", "Fir", "Tec", "Ant", "OtB", "Acc", "Agi", "Pac"],
+            "preferred": ["Cro", "Fin", "Pas", "Cmp", "Fla", "Wor", "Bal", "Sta"]
+        },
+        "Inside Forward": {
+            "key": ["Dri", "Fir", "Tec", "Ant", "Cmp", "OtB", "Acc", "Agi"],
+            "preferred": ["Cro", "Fin", "Lon", "Pas", "Fla", "Vis", "Wor", "Bal", "Pac", "Sta"]
+        },
+
+        # Centre Forwards
+        "Centre Forward": {
+            "key": ["Fin", "Fir", "Hea", "Tec", "Cmp", "OtB", "Acc", "Str"],
+            "preferred": ["Dri", "Pas", "Ant", "Dec", "Agi", "Bal", "Jum", "Pac"]
+        },
+        "Channel Forward": {
+            "key": ["Dri", "Fin", "Fir", "Tec", "Cmp", "OtB", "Wor", "Acc"],
+            "preferred": ["Cro", "Hea", "Pas", "Ant", "Dec", "Agi", "Bal", "Pac", "Sta"]
+        },
+        "Deep-Lying Forward": {
+            "key": ["Fin", "Fir", "Tec", "Cmp", "OtB", "Str"],
+            "preferred": ["Dri", "Pas", "Ant", "Dec", "Tea", "Vis", "Bal"]
+        },
+        "False Nine": {
+            "key": ["Dri", "Fir", "Pas", "Tec", "Cmp", "Dec", "OtB", "Tea", "Vis", "Acc"],
+            "preferred": ["Fin", "Ant", "Fla", "Agi", "Bal"]
+        },
+        "Poacher": {
+            "key": ["Fin", "Hea", "Ant", "Cmp", "Cnt", "OtB", "Acc"],
+            "preferred": ["Fir", "Tec", "Dec", "Bal"]
+        },
+        "Target Forward": {
+            "key": ["Fin", "Hea", "Agg", "Bra", "Cmp", "OtB", "Bal", "Jum", "Str"],
+            "preferred": ["Fir", "Ant", "Dec", "Tea"]
+        },
+    },
+    "Out of Possession": {
+        "Covering Centre-Back": {"key": ["Ant", "Pac", "Mar"], "preferred": []},
+        "Stopping Centre-Back": {"key": ["Agg", "Tck", "Str"], "preferred": []},
+        "Covering Wide Centre-Back": {"key": ["Ant", "Pac", "Mar"], "preferred": []},
+        "Stopping Wide Centre-Back": {"key": ["Agg", "Tck", "Str"], "preferred": []},
+        "Holding Full-Back": {"key": ["Pos", "Cnt", "Mar"], "preferred": []},
+        "Pressing Full-Back": {"key": ["Agg", "Wor", "Ant"], "preferred": []},
+        "Holding Wing-Back": {"key": ["Pos", "Cnt", "Mar"], "preferred": []},
+        "Pressing Wing-Back": {"key": ["Agg", "Wor", "Ant"], "preferred": []},
+        "Dropping Defensive Midfielder": {"key": ["Pos", "Dec", "Ant"], "preferred": []},
+        "Pressing Defensive Midfielder": {"key": ["Agg", "Wor", "Ant"], "preferred": []},
+        "Screening Defensive Midfielder": {"key": ["Pos", "Cnt", "Mar"], "preferred": []},
+        "Wide Covering Defensive Midfielder": {"key": ["Ant", "Pac", "Wor"], "preferred": []},
+        "Pressing Central Midfielder": {"key": ["Agg", "Wor", "Ant"], "preferred": []},
+        "Screening Central Midfielder": {"key": ["Pos", "Cnt", "Mar"], "preferred": []},
+        "Wide Covering Central Midfielder": {"key": ["Ant", "Pac", "Wor"], "preferred": []},
+        "Tracking Wide Midfielder": {"key": ["Mar", "Wor", "Sta"], "preferred": []},
+        "Wide Outlet Wide Midfielder": {"key": ["OtB", "Pac", "Ant"], "preferred": []},
+        "Central Outlet Attacking Midfielder": {"key": ["OtB", "Dec", "Ant"], "preferred": []},
+        "Splitting Outlet Attacking Midfielder": {"key": ["OtB", "Pac", "Ant"], "preferred": []},
+        "Tracking Attacking Midfielder": {"key": ["Mar", "Wor", "Sta"], "preferred": []},
+        "Inside Outlet Winger": {"key": ["OtB", "Dec", "Ant"], "preferred": []},
+        "Tracking Winger": {"key": ["Mar", "Wor", "Sta"], "preferred": []},
+        "Wide Outlet Winger": {"key": ["OtB", "Pac", "Ant"], "preferred": []},
+        "Central Outlet Centre Forward": {"key": ["OtB", "Dec", "Ant"], "preferred": []},
+        "Splitting Outlet Centre Forward": {"key": ["OtB", "Pac", "Ant"], "preferred": []},
+        "Tracking Centre Forward": {"key": ["Mar", "Wor", "Sta"], "preferred": []},
+    }
+}
+
+role_groups = {
+    role: phase
+    for phase, roles in role_attributes.items()
+    for role in roles.keys()
+}
+
+all_role_names = [
+    role
+    for phase in ["In Possession", "Out of Possession"]
+    for role in role_attributes[phase].keys()
+]
+
+all_attributes = sorted({
+    attr
+    for phase_roles in role_attributes.values()
+    for attrs in phase_roles.values()
+    for attr_list in [attrs["key"], attrs["preferred"]]
+    for attr in attr_list
+})
+
+
+def avg_attrs(df, attrs):
+    existing = [attr for attr in attrs if attr in df.columns]
+    if not existing:
+        return pd.Series(0, index=df.index)
+    return df[existing].mean(axis=1)
+
+
+def calculate_role_scores(df):
+    results = []
+
+    for phase, roles in role_attributes.items():
+        for role, attrs in roles.items():
+            key_score = avg_attrs(df, attrs["key"])
+
+            if attrs["preferred"]:
+                preferred_score = avg_attrs(df, attrs["preferred"])
+                score_series = (key_score * 0.8) + (preferred_score * 0.2)
+            else:
+                score_series = key_score
+
+            for player, score in zip(df["Name"], score_series.round(2)):
+                results.append({
+                    "Player": player,
+                    "Phase": phase,
+                    "Role": role,
+                    "Score": score
+                })
+
+    return pd.DataFrame(results)
+
+
+def highlight_max(s):
+    is_max = s == s.max()
+    return ["background-color: #006400; color: white" if v else "" for v in is_max]
+
+
 if uploaded_file:
     try:
-        # Read file based on extension
-        if uploaded_file.name.endswith(".csv"):
+        if uploaded_file.name.lower().endswith(".csv"):
             attributes_df = pd.read_csv(uploaded_file)
         else:
             attributes_df = pd.read_excel(uploaded_file)
@@ -30,222 +325,6 @@ if uploaded_file:
         st.error(f"Failed to read file: {e}")
         st.stop()
 
-    # Load formulas
-    formula_text = """
-    # (Paste your entire long formula string here, unchanged)
-    
-AF At = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Cmp]+Attributes[Acc])/7)*0.8)+(((Attributes[Pas]+Attributes[Ant]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-DLF At = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Tea])/7)*0.8)+(((Attributes[Fin]+Attributes[Ant]+Attributes[Fla]+Attributes[Vis]+Attributes[Bal]+Attributes[Str]+Attributes[Dri])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-DLF Su = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Tea])/7)*0.8)+(((Attributes[Fin]+Attributes[Ant]+Attributes[Fla]+Attributes[Vis]+Attributes[Bal]+Attributes[Str])/6)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-CF At = ((((Attributes[Dri]+Attributes[Fir]+Attributes[Hea]+Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[OtB]+Attributes[Acc]+Attributes[Agi]+Attributes[Str]+Attributes[Fin])/11)*0.8)+(((Attributes[Vis]+Attributes[Tea]+Attributes[Wor]+Attributes[Bal]+Attributes[Pas]+Attributes[Lon]+Attributes[Jum]+Attributes[Pac]+Attributes[Sta]+Attributes[Dec])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-CF Su = ((((Attributes[Dri]+Attributes[Fir]+Attributes[Hea]+Attributes[Lon]+Attributes[Pas]+Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Vis]+Attributes[Acc]+Attributes[Agi]+Attributes[Str])/14)*0.8)+(((Attributes[Fin]+Attributes[Tea]+Attributes[Wor]+Attributes[Bal]+Attributes[Jum]+Attributes[Pac]+Attributes[Sta])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-TF At = ((((Attributes[Hea]+Attributes[Bra]+Attributes[Tea]+Attributes[Bal]+Attributes[Jum]+Attributes[Str]+Attributes[Fin]+Attributes[Cmp])/8)*0.8)+(((Attributes[Fir]+Attributes[Agg]+Attributes[Ant]+Attributes[Dec]+Attributes[OtB])/5)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-TF Su = ((((Attributes[Hea]+Attributes[Bra]+Attributes[Tea]+Attributes[Bal]+Attributes[Jum]+Attributes[Str])/6)*0.8)+(((Attributes[Fin]+Attributes[Fir]+Attributes[Agg]+Attributes[Ant]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Poach At = ((((Attributes[Fin]+Attributes[Ant]+Attributes[Cmp]+Attributes[OtB])/4)*0.8)+(((Attributes[Fir]+Attributes[Hea]+Attributes[Tec]+Attributes[Dec]+Attributes[Acc])/5)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Pre Fwd At = ((((Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Dec]+Attributes[Tea]+Attributes[Wor]+Attributes[Acc]+Attributes[Pac]+Attributes[Sta])/9)*0.8)+(((Attributes[Fir]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Str]+Attributes[OtB]+Attributes[Fin])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Pre Fwd Su = ((((Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Dec]+Attributes[Tea]+Attributes[Wor]+Attributes[Acc]+Attributes[Pac]+Attributes[Sta])/9)*0.8)+(((Attributes[Fir]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Str]+Attributes[OtB]+Attributes[Pas])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Pre Fwd De = ((((Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Dec]+Attributes[Tea]+Attributes[Wor]+Attributes[Acc]+Attributes[Pac]+Attributes[Sta])/9)*0.8)+(((Attributes[Fir]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Str])/6)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-F9 Su = (((((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Vis]+Attributes[Acc]+Attributes[Agi])/10)*0.8)+(((Attributes[Fin]+Attributes[Ant]+Attributes[Fla]+Attributes[Tea]+Attributes[Bal])/5)*0.2)))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-IF A = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Acc]+Attributes[Agi])/7)*0.8)+(((Attributes[Lon]+Attributes[Pas]+Attributes[Ant]+Attributes[Cmp]+Attributes[Fla]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/9)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-IF S = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Tec]+Attributes[OtB]+Attributes[Acc]+Attributes[Agi])/7)*0.8)+(((Attributes[Lon]+Attributes[Pas]+Attributes[Ant]+Attributes[Cmp]+Attributes[Fla]+Attributes[Vis]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-Wide Mid At = ((((Attributes[Pas]+Attributes[Tck]+Attributes[Tea]+Attributes[Wor]+Attributes[Dec])/5)*0.8)+(((Attributes[Cro]+Attributes[Fir]+Attributes[OtB]+Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[Sta]+Attributes[Vis])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Wide Mid Su = ((((Attributes[Pas]+Attributes[Tck]+Attributes[Tea]+Attributes[Wor]+Attributes[Dec])/5)*0.8)+(((Attributes[Cro]+Attributes[Fir]+Attributes[OtB]+Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[Sta]+Attributes[Pos]+Attributes[Vis]+Attributes[Cnt])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Wide Mid De = ((((Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Tea]+Attributes[Wor]+Attributes[Cnt]+Attributes[Dec])/7)*0.8)+(((Attributes[Cro]+Attributes[Fir]+Attributes[Mar]+Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[Sta])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Def Wing Su = ((((Attributes[Tec]+Attributes[OtB]+Attributes[Pos]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta])/6)*0.8)+(((Attributes[Cro]+Attributes[Dri]+Attributes[Fir]+Attributes[Mar]+Attributes[Tck]+Attributes[Agg]+Attributes[Cnt]+Attributes[Dec]+Attributes[Acc]+Attributes[Cmp]+Attributes[Pas])/11)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Def Wing De = ((((Attributes[Tec]+Attributes[OtB]+Attributes[Pos]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta])/6)*0.8)+(((Attributes[Cro]+Attributes[Dri]+Attributes[Fir]+Attributes[Mar]+Attributes[Tck]+Attributes[Agg]+Attributes[Cnt]+Attributes[Dec]+Attributes[Acc])/9)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Inv Wing At = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Pas]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/6)*0.8)+(((Attributes[Fir]+Attributes[Lon]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta]+Attributes[Vis]+Attributes[Cmp]+Attributes[Dec]+Attributes[Ant]+Attributes[Fla])/12)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Inv Wing Su = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Pas]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/6)*0.8)+(((Attributes[Fir]+Attributes[Lon]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta]+Attributes[Vis]+Attributes[Cmp]+Attributes[Dec])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Winger Su = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/5)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Winger At = ((((Attributes[Cro]+Attributes[Dri]+Attributes[Tec]+Attributes[Acc]+Attributes[Agi])/5)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[OtB]+Attributes[Wor]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta]+Attributes[Fla]+Attributes[Ant])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Tq At = ((((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[Fla]+Attributes[OtB]+Attributes[Vis]+Attributes[Acc])/10)*0.8)+(((Attributes[Fin]+Attributes[Ant]+Attributes[Agi]+Attributes[Bal])/4)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Eng Su = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[Vis])/6)*0.8)+(((Attributes[Dri]+Attributes[Ant]+Attributes[Fla]+Attributes[OtB]+Attributes[Tea]+Attributes[Agi])/6)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-AMC At = ((((Attributes[Fir]+Attributes[Lon]+Attributes[Pas]+Attributes[Tec]+Attributes[Ant]+Attributes[Dec]+Attributes[Fla]+Attributes[OtB])/8)*0.8)+(((Attributes[Dri]+Attributes[Cmp]+Attributes[Vis]+Attributes[Agi]+Attributes[Fin])/5)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-AMC Su = ((((Attributes[Fir]+Attributes[Lon]+Attributes[Pas]+Attributes[Tec]+Attributes[Ant]+Attributes[Dec]+Attributes[Fla]+Attributes[OtB])/8)*0.8)+(((Attributes[Dri]+Attributes[Cmp]+Attributes[Vis]+Attributes[Agi])/4)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-SS At = ((((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Ant]+Attributes[Cmp]+Attributes[OtB]+Attributes[Acc])/7)*0.8)+(((Attributes[Pas]+Attributes[Tec]+Attributes[Cnt]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Sta])/9)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-AP At = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Tea]+Attributes[Vis])/8)*0.8)+(((Attributes[Dri]+Attributes[Ant]+Attributes[Fla]+Attributes[Agi]+Attributes[Acc])/5)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-AP Su = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[OtB]+Attributes[Tea]+Attributes[Vis])/8)*0.8)+(((Attributes[Dri]+Attributes[Ant]+Attributes[Fla]+Attributes[Agi])/4)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Car Su = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tck]+Attributes[Dec]+Attributes[Pos]+Attributes[Tea]+Attributes[Sta])/7)*0.8)+(((Attributes[Tec]+Attributes[Cmp]+Attributes[Ant]+Attributes[Cnt]+Attributes[OtB]+Attributes[Vis]+Attributes[Wor])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-B2B Su = ((((Attributes[Pas]+Attributes[Tck]+Attributes[OtB]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta])/6)*0.8)+(((Attributes[Dri]+Attributes[Fin]+Attributes[Fir]+Attributes[Lon]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Cmp]+Attributes[Dec]+Attributes[Pos]+Attributes[Acc]+Attributes[Bal]+Attributes[Pac]+Attributes[Str])/14)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Mez At = ((((Attributes[Pas]+Attributes[Tec]+Attributes[Wor]+Attributes[OtB]+Attributes[Dec]+Attributes[Acc])/6)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Lon]+Attributes[Fin]+Attributes[Ant]+Attributes[Cmp]+Attributes[Vis]+Attributes[Bal]+Attributes[Sta]+Attributes[Fla])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Mez Su = ((((Attributes[Pas]+Attributes[Tec]+Attributes[Wor]+Attributes[OtB]+Attributes[Dec]+Attributes[Acc])/6)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Lon]+Attributes[Tck]+Attributes[Ant]+Attributes[Cmp]+Attributes[Vis]+Attributes[Bal]+Attributes[Sta])/9)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-CM At = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tck]+Attributes[Dec]+Attributes[Tea])/5)*0.8)+(((Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[Lon]+Attributes[OtB]+Attributes[Vis]+Attributes[Wor]+Attributes[Sta]+Attributes[Acc])/9)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-CM Su = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tck]+Attributes[Dec]+Attributes[Tea])/5)*0.8)+(((Attributes[Tec]+Attributes[Ant]+Attributes[Cmp]+Attributes[Cnt]+Attributes[OtB]+Attributes[Vis]+Attributes[Wor]+Attributes[Sta])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-CM De = ((((Attributes[Tck]+Attributes[Cnt]+Attributes[Dec]+Attributes[Pos]+Attributes[Tea])/5)*0.8)+(((Attributes[Fir]+Attributes[Mar]+Attributes[Pas]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Cmp]+Attributes[Wor]+Attributes[Sta])/9)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-RPM Su = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[OtB]+Attributes[Dec]+Attributes[Cmp]+Attributes[Ant]+Attributes[Tea]+Attributes[Vis]+Attributes[Wor]+Attributes[Acc]+Attributes[Sta])/12)*0.8)+(((Attributes[Dri]+Attributes[Lon]+Attributes[Pos]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac])/7)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Half Back = ((((Attributes[Mar]+Attributes[Tck]+Attributes[Ant]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[Pos]+Attributes[Tea])/8)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[Agg]+Attributes[Bra]+Attributes[Wor]+Attributes[Jum]+Attributes[Sta]+Attributes[Str])/8)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Reg = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[Fla]+Attributes[OtB]+Attributes[Tea]+Attributes[Vis])/9)*0.8)+(((Attributes[Dri]+Attributes[Lon]+Attributes[Ant]+Attributes[Bal])/4)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-Anc = ((((Attributes[Mar]+Attributes[Tck]+Attributes[Ant]+Attributes[Cnt]+Attributes[Dec]+Attributes[Pos])/6)*0.8)+(((Attributes[Cmp]+Attributes[Tea]+Attributes[Str])/3)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-DLP Su = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[Tea]+Attributes[Vis])/7)*0.8)+(((Attributes[OtB]+Attributes[Ant]+Attributes[Pos]+Attributes[Bal])/4)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-DLP De = ((((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Cmp]+Attributes[Dec]+Attributes[Tea]+Attributes[Vis])/7)*0.8)+(((Attributes[Tck]+Attributes[Ant]+Attributes[Pos]+Attributes[Bal])/4)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-SV Su = ((((Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[OtB]+Attributes[Pos]+Attributes[Wor]+Attributes[Pac]+Attributes[Sta])/8)*0.8)+(((Attributes[Fin]+Attributes[Fir]+Attributes[Lon]+Attributes[Ant]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[Acc]+Attributes[Bal]+Attributes[Str])/10)*0.2))+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-DM S = (((Attributes[Tck]+Attributes[Ant]+Attributes[Tea]+Attributes[Cnt])/4)*0.8)+(((Attributes[Mar]+Attributes[Pas]+Attributes[Cmp]+Attributes[Dec]+Attributes[Agg]+Attributes[Wor]+Attributes[Str]+Attributes[Sta]+Attributes[Fir])/9)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-DM D = (((Attributes[Tck]+Attributes[Ant]+Attributes[Tea]+Attributes[Cnt])/4)*0.8)+(((Attributes[Mar]+Attributes[Pas]+Attributes[Cmp]+Attributes[Dec]+Attributes[Agg]+Attributes[Wor]+Attributes[Str]+Attributes[Sta])/8)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-BWM Su = (((Attributes[Tck]+Attributes[Agg]+Attributes[Ant]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta])/6)*0.8)+(((Attributes[Mar]+Attributes[Bra]+Attributes[Cnt]+Attributes[Pas]+Attributes[Agi]+Attributes[Pac]+Attributes[Str])/7)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-BWM De = (((Attributes[Tck]+Attributes[Agg]+Attributes[Ant]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta])/6)*0.8)+(((Attributes[Mar]+Attributes[Bra]+Attributes[Cnt]+Attributes[Pos]+Attributes[Agi]+Attributes[Pac]+Attributes[Str])/7)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-CWB At = (((Attributes[Cro]+Attributes[Dri]+Attributes[Tec]+Attributes[Wor]+Attributes[Tea]+Attributes[OtB]+Attributes[Sta]+Attributes[Acc])/8)*0.8)+(((Attributes[Fir]+Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[Ant]+Attributes[Dec]+Attributes[Fla]+Attributes[Pos]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-CWB Su = (((Attributes[Cro]+Attributes[Dri]+Attributes[Tec]+Attributes[Wor]+Attributes[Tea]+Attributes[OtB]+Attributes[Sta]+Attributes[Acc])/8)*0.8)+(((Attributes[Fir]+Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[Ant]+Attributes[Dec]+Attributes[Fla]+Attributes[Pos]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4)*0.1)
-
-IWB At = (((Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Tea]+Attributes[Ant]+Attributes[Dec])/6)*0.8)+(((Attributes[Fir]+Attributes[Mar]+Attributes[Tec]+Attributes[Cmp]+Attributes[Cnt]+Attributes[OtB]+Attributes[Wor]+Attributes[Agi]+Attributes[Acc]+Attributes[Sta]+Attributes[Vis]+Attributes[Pac]+Attributes[Dri]+Attributes[Cro]+Attributes[Lon]+Attributes[Fla])/16)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-IWB Su = (((Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Tea]+Attributes[Ant]+Attributes[Dec])/6)*0.8)+(((Attributes[Fir]+Attributes[Mar]+Attributes[Tec]+Attributes[Cmp]+Attributes[Cnt]+Attributes[OtB]+Attributes[Wor]+Attributes[Agi]+Attributes[Acc]+Attributes[Sta]+Attributes[Vis])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-IWB De = (((Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Tea]+Attributes[Ant]+Attributes[Dec])/6)*0.8)+(((Attributes[Fir]+Attributes[Mar]+Attributes[Tec]+Attributes[Cmp]+Attributes[Cnt]+Attributes[OtB]+Attributes[Wor]+Attributes[Agi]+Attributes[Acc]+Attributes[Sta])/10)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-IFB De = (((Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Str])/5)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Jum]+Attributes[Pac])/14)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-WB At = (((Attributes[Cro]+Attributes[Dri]+Attributes[Mar]+Attributes[Tck]+Attributes[OtB]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta]+Attributes[Acc])/9)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Ant]+Attributes[Fla])/10)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-WB Su = (((Attributes[Cro]+Attributes[Dri]+Attributes[Mar]+Attributes[Tck]+Attributes[Tea]+Attributes[Wor]+Attributes[Sta]+Attributes[Acc]+Attributes[OtB])/9)*0.8)+(((Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac]+Attributes[Ant])/9)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-WB De = (((Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Tea]+Attributes[Wor]+Attributes[Ant]+Attributes[Sta]+Attributes[Acc])/8)*0.8)+(((Attributes[Cro]+Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Dec]+Attributes[Cnt]+Attributes[OtB]+Attributes[Agi]+Attributes[Bal]+Attributes[Pac])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-FB At = (((Attributes[Mar]+Attributes[Tck]+Attributes[Cro]+Attributes[Pos]+Attributes[Ant]+Attributes[Tea])/6)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Wor]+Attributes[Dec]+Attributes[Cnt]+Attributes[OtB]+Attributes[Agi]+Attributes[Sta]+Attributes[Pac])/11)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-FB Su = (((Attributes[Mar]+Attributes[Tck]+Attributes[Tea]+Attributes[Pos]+Attributes[Cnt]+Attributes[Ant])/6)*0.8)+(((Attributes[Cro]+Attributes[Dri]+Attributes[Pas]+Attributes[Tec]+Attributes[Wor]+Attributes[Dec]+Attributes[Sta]+Attributes[Pac])/8)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-FB De = (((Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Cnt]+Attributes[Ant])/5)*0.8)+(((Attributes[Cro]+Attributes[Pas]+Attributes[Tea]+Attributes[Wor]+Attributes[Dec]+Attributes[Sta]+Attributes[Pac])/7)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-Lib Su = (((Attributes[Fir]+Attributes[Hea]+Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[Tec]+Attributes[Dec]+Attributes[Cmp]+Attributes[Pos]+Attributes[Tea]+Attributes[Str]+Attributes[Jum])/12)*0.8)+(((Attributes[Ant]+Attributes[Bra]+Attributes[Cnt]+Attributes[Pac]+Attributes[Sta]+Attributes[Dri]+Attributes[Vis])/7)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-Lib De = (((Attributes[Fir]+Attributes[Hea]+Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[Tec]+Attributes[Dec]+Attributes[Cmp]+Attributes[Pos]+Attributes[Tea]+Attributes[Str]+Attributes[Jum])/12)*0.8)+(((Attributes[Ant]+Attributes[Bra]+Attributes[Cnt]+Attributes[Pac]+Attributes[Sta])/5)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-BPD Co = (((Attributes[Hea]+Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Cmp]+Attributes[Str]+Attributes[Jum])/8)*0.8)+(((Attributes[Fir]+Attributes[Tec]+Attributes[Pac]+Attributes[Ant]+Attributes[Bra]+Attributes[Cnt]+Attributes[Dec]+Attributes[Vis])/8)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-BPD St = (((Attributes[Hea]+Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Cmp]+Attributes[Str]+Attributes[Jum])/8)*0.8)+(((Attributes[Fir]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cnt]+Attributes[Dec]+Attributes[Vis])/8)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-BPD De = (((Attributes[Hea]+Attributes[Mar]+Attributes[Pas]+Attributes[Tck]+Attributes[Pos]+Attributes[Cmp]+Attributes[Str]+Attributes[Jum])/8)*0.8)+(((Attributes[Fir]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cnt]+Attributes[Dec]+Attributes[Vis]+Attributes[Pac])/9)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-WCB At = (((Attributes[Dri]+Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Pac]+Attributes[Str]+Attributes[Jum]+Attributes[Sta])/9)*0.8)+(((Attributes[Cro]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[OtB]+Attributes[Wor]+Attributes[Agi])/13)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-WCB Su = (((Attributes[Dri]+Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Pac]+Attributes[Str]+Attributes[Jum])/8)*0.8)+(((Attributes[Cro]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[OtB]+Attributes[Wor]+Attributes[Agi]+Attributes[Sta])/14)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-WCB De = (((Attributes[Hea]+Attributes[Mar]+Attributes[Tck]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/6)*0.8)+(((Attributes[Dri]+Attributes[Fir]+Attributes[Pas]+Attributes[Tec]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Cnt]+Attributes[Dec]+Attributes[Wor]+Attributes[Agi]+Attributes[Pac])/13)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-CB Co = (((Attributes[Tck]+Attributes[Pos]+Attributes[Dec]+Attributes[Cnt]+Attributes[Ant]+Attributes[Pac])/6)*0.8)+(((Attributes[Cmp]+Attributes[Hea]+Attributes[Bra]+Attributes[Str]+Attributes[Jum])/5)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-CB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Dec]+Attributes[Pos]+Attributes[Str]+Attributes[Jum]+Attributes[Bra]+Attributes[Agg])/8)*0.8)+(((Attributes[Cnt]+Attributes[Ant]+Attributes[Cmp]+Attributes[Mar])/4)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-CB D = (((Attributes[Hea]+Attributes[Tck]+Attributes[Mar]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/6)*0.8)+(((Attributes[Cnt]+Attributes[Pac]+Attributes[Agg]+Attributes[Ant]+Attributes[Bra]+Attributes[Cmp]+Attributes[Dec])/7)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-NCB Co = (((Attributes[Hea]+Attributes[Tck]+Attributes[Ant]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Pac])/3)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-NCB De = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Ant]+Attributes[Pac])/4)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attributes[Pos]+Attributes[Str]+Attributes[Jum])/7)*0.8)+(((Attributes[Mar]+Attributes[Cnt]+Attributes[Ant])/3)*0.2)+(((Attributes[Acc]+Attributes[Jum]+Attributes[Pac]+Attributes[Det])/4*0.1))
-
-    """
-
-    pattern = re.compile(r"(?P<role>[A-Za-z0-9\s]+)=\s*(?P<formula>\(+.*)")
-    formulas = {}
-    for line in formula_text.splitlines():
-        match = pattern.match(line.strip())
-        if match:
-            role = match.group("role").strip()
-            formula = match.group("formula").strip()
-            formulas[role] = formula
-
-    # Evaluate formula for each player
-    def evaluate_formula(formula: str, player: dict) -> float:
-        eval_formula = formula
-        for attr in re.findall(r"Attributes\[(\w+)\]", formula):
-            value = player.get(attr, 0)
-            eval_formula = eval_formula.replace(f"Attributes[{attr}]", str(value))
-        try:
-            return round(eval(eval_formula), 2)
-        except:
-            return None
-
-
-    column_map = {
-        "Player": "Name",
-        "Decisions": "Dec",
-        "Long Throws": "L Th",
-        "Passing": "Pas",
-        "Technique": "Tec",
-        "Tackling": "Tck",
-        "Penalty Taking": "Pen",
-        "Marking": "Mar",
-        "Long Shots": "Lon",
-        "Heading": "Hea",
-        "Crossing": "Cro",
-        "First Touch": "Fir",
-        "Free Kick Taking": "Fre",
-        "Finishing": "Fin",
-        "Dribbling": "Dri",
-        "Corners": "Cor",
-        "Acceleration": "Acc",
-        "Work Rate": "Wor",
-        "Vision": "Vis",
-        "Team Work": "Tea",
-        "Teamwork": "Tea",
-        "Positioning": "Pos",
-        "Off The Ball": "OtB",
-        "Leadership": "Ldr",
-        "Flair": "Fla",
-        "Determination": "Det",
-        "Concentration": "Cnt",
-        "Composure": "Cmp",
-        "Bravery": "Bra",
-        "Anticipation": "Ant",
-        "Aggression": "Agg",
-        "Agility": "Agi",
-        "Balance": "Bal",
-        "Jumping Reach": "Jum",
-        "Natural Fitness": "Nat",
-        "Pace": "Pac",
-        "Stamina": "Sta",
-        "Strength": "Str"
-    }
-
     attributes_df = attributes_df.rename(columns=column_map)
 
     if "Name" not in attributes_df.columns:
@@ -253,161 +332,122 @@ NCB St = (((Attributes[Hea]+Attributes[Tck]+Attributes[Agg]+Attributes[Bra]+Attr
         st.write("Columns found:", list(attributes_df.columns))
         st.stop()
 
-    # Convert all attribute columns used in the formulas to numbers.
-    formula_attributes = sorted(set(re.findall(r"Attributes\[(\w+)\]", formula_text)))
-    missing_attributes = [attr for attr in formula_attributes if attr not in attributes_df.columns]
+    missing_attributes = [attr for attr in all_attributes if attr not in attributes_df.columns]
 
     if missing_attributes:
         st.warning(
-            "Some attributes used in the formulas were not found in your upload. "
+            "Some attributes used in the role scores were not found in your upload. "
             "They will be treated as 0: " + ", ".join(missing_attributes)
         )
+        for attr in missing_attributes:
+            attributes_df[attr] = 0
 
-    for attr in formula_attributes:
-        if attr in attributes_df.columns:
-            attributes_df[attr] = pd.to_numeric(attributes_df[attr], errors="coerce").fillna(0)
-            
+    for attr in all_attributes:
+        attributes_df[attr] = pd.to_numeric(attributes_df[attr], errors="coerce").fillna(0)
+
     # Remove Goalkeepers
     if "Best Pos" in attributes_df.columns:
         attributes_df = attributes_df[
             ~attributes_df["Best Pos"].astype(str).str.contains("GK", case=False, na=False)
         ]
-        
-    players_data = {
-        row["Name"]: row.to_dict()
-        for _, row in attributes_df.iterrows()
-    }
 
-    results = []
-    for player_name, player_data in players_data.items():
-        for role, formula in formulas.items():
-            score = evaluate_formula(formula, player_data)
-            if score is not None:
-                results.append({"Player": player_name, "Role": role, "Score": score})
+    if attributes_df.empty:
+        st.warning("No outfield players found after filtering out goalkeepers.")
+        st.stop()
 
-    results_df = pd.DataFrame(results)
-    
-    # Add ranking per role (1 = best score)
+    results_df = calculate_role_scores(attributes_df)
     results_df["Rank"] = results_df.groupby("Role")["Score"].rank(ascending=False, method="min")
 
     st.success("Role scores calculated!")
 
-    # Get top player per role
-    top_players = results_df.loc[results_df.groupby("Role")["Score"].idxmax()].reset_index(drop=True)
+    phase_filter = st.radio(
+        "Choose role phase to view:",
+        ["All", "In Possession", "Out of Possession"],
+        horizontal=True
+    )
 
-    with st.expander("🏆 View Top Player Per Role", expanded=False):
-        st.dataframe(top_players.sort_values(by="Role"), use_container_width=True)
+    if phase_filter == "All":
+        visible_results_df = results_df.copy()
+    else:
+        visible_results_df = results_df[results_df["Phase"] == phase_filter].copy()
 
-    # Show top roles per player
-    with st.expander("🔍 View Ranked Role Scores Per Player", expanded=True):
-        player_list = results_df["Player"].unique().tolist()
+    with st.expander("View Top Player Per Role", expanded=False):
+        top_players = visible_results_df.loc[
+            visible_results_df.groupby("Role")["Score"].idxmax()
+        ].reset_index(drop=True)
+        st.dataframe(
+            top_players.sort_values(by=["Phase", "Role"]),
+            use_container_width=True
+        )
+
+    with st.expander("View Ranked Role Scores Per Player", expanded=True):
+        player_list = sorted(visible_results_df["Player"].unique().tolist())
         selected_player = st.selectbox("Select a player to view their roles:", player_list)
-        player_roles = results_df[results_df["Player"] == selected_player].sort_values(by="Score", ascending=False)
+        player_roles = visible_results_df[visible_results_df["Player"] == selected_player].sort_values(
+            by=["Phase", "Score"],
+            ascending=[True, False]
+        )
         st.dataframe(player_roles, use_container_width=True)
 
-   
-    
-    # All scores table
-    with st.expander("📋 View All Role Scores Table"):
-        pivot_df = results_df.pivot(index="Player", columns="Role", values="Score")
+    with st.expander("View All Role Scores Table", expanded=True):
+        pivot_df = visible_results_df.pivot(index="Player", columns="Role", values="Score")
 
         if pivot_df.empty:
             st.warning("No role scores available to display.")
         else:
-        # Value range filter
             min_score = float(pivot_df.min().min())
             max_score = float(pivot_df.max().max())
 
-        # Defensive check to avoid slider errors
             if min_score == max_score:
-                 st.info(f"All scores are the same: {min_score:.2f}")
-                 score_range = (min_score, max_score)
+                st.info(f"All scores are the same: {min_score:.2f}")
+                score_range = (min_score, max_score)
             else:
                 score_range = st.slider(
-                "Select score range to filter players",
-                min_value=round(min_score, 2),
-                max_value=round(max_score, 2),
-                value=(round(min_score, 2), round(max_score, 2)),
-                step=0.01
+                    "Select score range to filter players",
+                    min_value=round(min_score, 2),
+                    max_value=round(max_score, 2),
+                    value=(round(min_score, 2), round(max_score, 2)),
+                    step=0.01
+                )
+
+            mask = pivot_df.apply(lambda row: row.between(score_range[0], score_range[1]).any(), axis=1)
+            filtered_df = pivot_df[mask]
+
+            ordered_roles = [role for role in all_role_names if role in filtered_df.columns]
+            filtered_df = filtered_df[ordered_roles]
+
+            styled_filtered_df = (
+                filtered_df.style
+                .apply(highlight_max, axis=1)
+                .format("{:.2f}")
             )
 
-        # Apply filter
-        mask = pivot_df.apply(lambda row: row.between(score_range[0], score_range[1]).any(), axis=1)
-        filtered_df = pivot_df[mask]
+            st.dataframe(styled_filtered_df, use_container_width=True)
 
-    # Apply filter: keep rows where any score is within the selected range
-    mask = pivot_df.apply(lambda row: row.between(score_range[0], score_range[1]).any(), axis=1)
-    filtered_df = pivot_df[mask]
-
-    role_groups = {
-        # Defensive
-        "BPD Co": "Defensive", "BPD De": "Defensive", "BPD St": "Defensive",
-        "CB Co": "Defensive", "CB D": "Defensive", "CB St": "Defensive", 
-        "NCB St": "Defensive", "NCB Co": "Defensive", "NCB De": "Defensive",
-        "WCB At": "Defensive", "WCB De": "Defensive", "WCB Su": "Defensive",
-        "Lib Su": "Defensive", "Lib De": "Defensive",
-        "FB De": "Defensive", "FB Su": "Defensive", "FB At": "Defensive",
-        "IFB De": "Defensive", "IWB De": "Defensive", "IWB Su": "Defensive", "IWB At": "Defensive",
-        "WB De": "Defensive", "WB Su": "Defensive", "WB At": "Defensive",
-
-        # Midfield
-        "BWM De": "Midfield", "BWM Su": "Midfield", "DM D": "Midfield", "DM S": "Midfield",
-        "DLP De": "Midfield", "DLP Su": "Midfield", "Half Back": "Midfield", "Anc": "Midfield",
-        "SV Su": "Midfield", "RPM Su": "Midfield", "Reg": "Midfield",
-        "CM De": "Midfield", "CM Su": "Midfield", "CM At": "Midfield",
-        "B2B Su": "Midfield", "AP Su": "Midfield", "AP At": "Midfield",
-        "Def Wing De": "Midfield", "Def Wing Su": "Midfield",
-        "Wide Mid De": "Midfield", "Wide Mid Su": "Midfield", "Wide Mid At": "Midfield",
-        "Mez Su": "Midfield", "Mez At": "Midfield",
-        "Winger Su": "Midfield", "Winger At": "Midfield",
-        "AMC Su": "Midfield", "AMC At": "Midfield",
-        "Inv Wing Su": "Midfield", "Inv Wing At": "Midfield",
-
-        # Attacking
-        "IF A": "Attacking", "IF S": "Attacking", "Eng Su": "Attacking",
-        "Tq At": "Attacking", "TF Su": "Attacking", "TF At": "Attacking",
-        "SS At": "Attacking", "Pre Fwd De": "Attacking", "Pre Fwd Su": "Attacking", "Pre Fwd At": "Attacking",
-        "Poach At": "Attacking", "F9 Su": "Attacking",
-        "CF Su": "Attacking", "CF At": "Attacking",
-        "AF At": "Attacking"
-    }
-
-    group_order = ["Defensive", "Midfield", "Attacking"]
-    ordered_roles = sorted(filtered_df.columns, key=lambda role: (group_order.index(role_groups.get(role, "Midfield")), role))
-    filtered_df = filtered_df[ordered_roles]
-
-    def highlight_max(s):
-        is_max = s == s.max()
-        return ['background-color: #006400; color: white' if v else '' for v in is_max]
-
-    styled_filtered_df = (
-        filtered_df.style
-        .apply(highlight_max, axis=1)
-        .format("{:.2f}")
-    )
-
-    st.dataframe(styled_filtered_df, use_container_width=True)
-
-    with st.expander("🎯 Show Players Outside Top N in Every Role", expanded=False):
-        rank_threshold = st.selectbox("Only show players ranked *outside* top N across all roles:", [5, 10, 12], index=1)
+    with st.expander("Show Players Outside Top N in Every Role", expanded=False):
+        rank_threshold = st.selectbox(
+            "Only show players ranked outside top N across all visible roles:",
+            [5, 10, 12],
+            index=1
+        )
         display_option = st.radio("View:", ["Scores", "Ranks"], horizontal=True)
 
-    # Create pivot tables
-        score_pivot = results_df.pivot(index="Player", columns="Role", values="Score")
-        rank_pivot = results_df.pivot(index="Player", columns="Role", values="Rank")
+        score_pivot = visible_results_df.pivot(index="Player", columns="Role", values="Score")
+        rank_pivot = visible_results_df.pivot(index="Player", columns="Role", values="Rank")
 
-    # Filter: player must be ranked *worse than* N in all roles
         mask_outside_top_n = rank_pivot.apply(lambda row: row.dropna().min() > rank_threshold, axis=1)
         outside_top_n_players = rank_pivot[mask_outside_top_n]
 
-    if outside_top_n_players.empty:
-        st.warning(f"All players have at least one role ranked within top {rank_threshold}.")
-    else:
-        if display_option == "Scores":
-            df_to_display = score_pivot.loc[outside_top_n_players.index]
-            st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
+        if outside_top_n_players.empty:
+            st.warning(f"All players have at least one visible role ranked within top {rank_threshold}.")
         else:
-            df_to_display = rank_pivot.loc[outside_top_n_players.index]
-            st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
+            if display_option == "Scores":
+                df_to_display = score_pivot.loc[outside_top_n_players.index]
+                df_to_display = df_to_display[[role for role in all_role_names if role in df_to_display.columns]]
+                st.dataframe(df_to_display.style.format("{:.2f}"), use_container_width=True)
+            else:
+                df_to_display = rank_pivot.loc[outside_top_n_players.index]
+                df_to_display = df_to_display[[role for role in all_role_names if role in df_to_display.columns]]
+                st.dataframe(df_to_display.style.format("{:.0f}"), use_container_width=True)
 else:
     st.info("Please upload a file to begin.")
